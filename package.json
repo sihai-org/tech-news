@@ -1,0 +1,28 @@
+{
+  "name": "github-radar",
+  "version": "1.0.0",
+  "description": "GitHub Open Source Radar - Discover trending, fastest-growing, and newly published repositories",
+  "main": "dist/index.js",
+  "bin": {
+    "github-radar": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": ["github", "trending", "cli", "typescript"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^11.0.0",
+    "dotenv": "^16.3.1",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.0",
+    "typescript": "^5.1.6",
+    "ts-node": "^10.9.1"
+  }
+}
