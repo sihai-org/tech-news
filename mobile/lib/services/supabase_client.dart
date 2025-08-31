@@ -7,11 +7,23 @@ class SupabaseClientService {
   factory SupabaseClientService() => _instance;
   SupabaseClientService._internal();
 
-  SupabaseClient get client => Supabase.instance.client;
+  bool _isInitialized = false;
+  
+  SupabaseClient get client {
+    if (!_isInitialized) {
+      throw StateError('Supabase client is not initialized. Please check your configuration.');
+    }
+    return Supabase.instance.client;
+  }
+
+  bool get isInitialized => _isInitialized;
 
   static Future<void> initialize() async {
+    final instance = SupabaseClientService._instance;
+    
     if (!AppConfig.isSupabaseConfigured) {
       debugPrint('Warning: Supabase configuration not found. Please set SUPABASE_URL and SUPABASE_ANON_KEY.');
+      debugPrint('Current config: URL=${AppConfig.supabaseUrl}, Key=${AppConfig.supabaseAnonKey.substring(0, 10)}...');
       return;
     }
 
@@ -22,6 +34,7 @@ class SupabaseClientService {
         debug: kDebugMode,
       );
       
+      instance._isInitialized = true;
       debugPrint('Supabase initialized successfully');
     } catch (e) {
       debugPrint('Failed to initialize Supabase: $e');

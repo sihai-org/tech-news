@@ -12,7 +12,24 @@ class AnalysisService {
 
   final SupabaseClientService _supabaseClient = SupabaseClientService();
   
-  SupabaseClient get _client => _supabaseClient.client;
+  SupabaseClient get _client {
+    if (!_supabaseClient.isInitialized) {
+      throw StateError('Supabase is not initialized. Please check your app configuration and ensure SUPABASE_URL and SUPABASE_ANON_KEY are set correctly.');
+    }
+    return _supabaseClient.client;
+  }
+
+  /// Check if Supabase is initialized and return failure result if not
+  ServiceResult<T>? _checkInitialization<T>() {
+    if (!_supabaseClient.isInitialized) {
+      return ServiceResult.failure(const ApiError(
+        message: 'Supabase is not initialized. Please check your app configuration and ensure SUPABASE_URL and SUPABASE_ANON_KEY are set correctly.',
+        code: 500,
+        details: 'Check that SUPABASE_URL and SUPABASE_ANON_KEY environment variables are properly set.',
+      ));
+    }
+    return null;
+  }
 
   /// Get paginated list of analyses
   Future<ServiceResult<PaginatedResponse<Analysis>>> getAnalyses({
@@ -23,6 +40,8 @@ class AnalysisService {
     String? searchQuery,
   }) async {
     try {
+      final initCheck = _checkInitialization<PaginatedResponse<Analysis>>();
+      if (initCheck != null) return initCheck;
       // Calculate offset for pagination
       final offset = (page - 1) * perPage;
       
@@ -110,6 +129,8 @@ class AnalysisService {
   /// Get a single analysis by ID
   Future<ServiceResult<Analysis>> getAnalysisById(String id) async {
     try {
+      final initCheck = _checkInitialization<Analysis>();
+      if (initCheck != null) return initCheck;
       final response = await _client
           .from(AppConfig.analysesTable)
           .select('*')

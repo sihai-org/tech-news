@@ -11,11 +11,20 @@ import 'providers/analysis_provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Load environment variables from .env file
-  await dotenv.load(fileName: ".env");
+  // Load environment variables from .env file (if exists)
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    debugPrint('Warning: .env file not found. Using embedded configuration or defaults.');
+  }
   
   // Initialize services
-  await SupabaseClientService.initialize();
+  try {
+    await SupabaseClientService.initialize();
+  } catch (e) {
+    debugPrint('Warning: Supabase initialization failed: $e');
+  }
+  
   await CacheService().initialize();
   
   runApp(const GitHubRadarApp());
