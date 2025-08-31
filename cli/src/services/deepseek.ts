@@ -1,9 +1,19 @@
 import OpenAI from "openai";
 
-const deepseek = new OpenAI({
-  baseURL: "https://api.deepseek.com",
-  apiKey: process.env.DEEPSEEK_API_KEY,
-});
+let deepseek: OpenAI | null = null;
+
+function getDeepSeekClient(): OpenAI {
+  if (!deepseek) {
+    if (!process.env.DEEPSEEK_API_KEY) {
+      throw new Error('DEEPSEEK_API_KEY environment variable is required');
+    }
+    deepseek = new OpenAI({
+      baseURL: "https://api.deepseek.com",
+      apiKey: process.env.DEEPSEEK_API_KEY,
+    });
+  }
+  return deepseek;
+}
 
 export async function analyzeRepository(repoData: {
   name: string;
@@ -74,7 +84,8 @@ ${
 请生成一份1000字的中文分析报告。`;
 
   try {
-    const response = await deepseek.chat.completions.create({
+    const client = getDeepSeekClient();
+    const response = await client.chat.completions.create({
       model: "deepseek-reasoner",
       messages: [
         { role: "system", content: systemPrompt },
