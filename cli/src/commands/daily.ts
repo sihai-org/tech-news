@@ -34,11 +34,12 @@ async function runCollection(
       break;
       
     case 'newly_published':
+      // For newly_published, limit to only 10 repositories
       repositories = await newlyPublished(
         collection.language,
         collection.days,
-        perPage,
-        maxPages
+        10, // Fixed to 10 per page
+        1   // Only 1 page, so total = 10 repositories
       );
       break;
       
