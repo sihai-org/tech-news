@@ -227,3 +227,63 @@ export async function getAnalysisById(id: string): Promise<Database['public']['T
   
   return data;
 }
+
+export async function getUnanalyzedRepositories(limit?: number): Promise<Database['public']['Tables']['github_radar_repositories']['Row'][]> {
+  const client = initSupabase();
+  
+  let query = client
+    .from('github_radar_repositories')
+    .select('*')
+    .not('html_url', 'in', `(
+      SELECT DISTINCT repository_url 
+      FROM github_radar_analyses 
+      WHERE repository_url IS NOT NULL
+    )`)
+    .order('discovered_at', { ascending: false });
+  
+  if (limit) {
+    query = query.limit(limit);
+  }
+  
+  const { data, error } = await query;
+  
+  if (error) {
+    throw new Error(`Failed to fetch unanalyzed repositories: ${error.message}`);
+  }
+  
+  return data || [];
+}
+
+export async function getRepositoryStatistics(): Promise<{
+  totalRepositories: number;
+  analyzedRepositories: number;
+  unanalyzedRepositories: number;
+}> {
+  const client = initSupabase();
+  
+  // Get total repositories count
+  const { count: totalRepositories, error: totalError } = await client
+    .from('github_radar_repositories')
+    .select('*', { count: 'exact', head: true });
+  
+  if (totalError) {
+    throw new Error(`Failed to count total repositories: ${totalError.message}`);
+  }
+  
+  // Get analyzed repositories count
+  const { count: analyzedRepositories, error: analyzedError } = await client
+    .from('github_radar_analyses')
+    .select('repository_url', { count: 'exact', head: true });
+  
+  if (analyzedError) {
+    throw new Error(`Failed to count analyzed repositories: ${analyzedError.message}`);
+  }
+  
+  const unanalyzedRepositories = (totalRepositories || 0) - (analyzedRepositories || 0);
+  
+  return {
+    totalRepositories: totalRepositories || 0,
+    analyzedRepositories: analyzedRepositories || 0,
+    unanalyzedRepositories: Math.max(0, unanalyzedRepositories)
+  };
+}

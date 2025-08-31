@@ -6,6 +6,7 @@ import { runDailyRadar } from './commands/daily.js';
 import { searchCommand } from './commands/search.js';
 import { analyzeCommand } from './commands/analyze.js';
 import { analyzeTopCommand } from './commands/analyze-top.js';
+import { analyzeMissingCommand } from './commands/analyze-missing.js';
 import { publishToWechatCommand } from './commands/publish-wechat.js';
 
 
@@ -57,6 +58,14 @@ async function main(): Promise<void> {
     .option('-d, --delay <ms>', 'Delay between analyses (ms)', '5000')
     .option('--no-save-to-db', 'Skip saving to database')
     .action(analyzeTopCommand);
+
+  program
+    .command('analyze-missing')
+    .description('Analyze repositories that have not been analyzed yet')
+    .option('-l, --limit <number>', 'Maximum number of repositories to analyze')
+    .option('-d, --delay <ms>', 'Delay between analyses (ms)', '3000')
+    .option('--dry-run', 'Show what would be analyzed without actually doing it')
+    .action(analyzeMissingCommand);
 
   program
     .command('publish-wechat')
