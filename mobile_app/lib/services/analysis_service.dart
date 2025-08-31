@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/app_config.dart';
 import '../models/models.dart';
@@ -63,13 +64,32 @@ class AnalysisService {
       }
 
       final countResult = await countQuery;
-      final total = countResult.length;
+      final total = (countResult as List<dynamic>).length;
       final totalPages = (total / perPage).ceil();
 
       // Convert response to Analysis objects
-      final analyses = response
-          .map((json) => Analysis.fromJson(json as Map<String, dynamic>))
-          .toList();
+      final analyses = <Analysis>[];
+      for (final item in (response as List<dynamic>)) {
+        try {
+          final itemMap = item as Map<String, dynamic>;
+          
+          // Handle potential DateTime format issues from Supabase
+          if (itemMap['analyzed_at'] != null && itemMap['analyzed_at'] is! String) {
+            itemMap['analyzed_at'] = itemMap['analyzed_at'].toString();
+          }
+          if (itemMap['created_at'] != null && itemMap['created_at'] is! String) {
+            itemMap['created_at'] = itemMap['created_at'].toString();
+          }
+          
+          final analysis = Analysis.fromJson(itemMap);
+          analyses.add(analysis);
+        } catch (e) {
+          debugPrint('Failed to parse analysis item: $e');
+          debugPrint('Item data: $item');
+          debugPrint('Item type: ${item.runtimeType}');
+          // Skip this item and continue with others
+        }
+      }
 
       final paginatedResponse = PaginatedResponse<Analysis>(
         data: analyses,
@@ -96,7 +116,17 @@ class AnalysisService {
           .eq('id', id)
           .single();
 
-      final analysis = Analysis.fromJson(response);
+      final responseMap = response as Map<String, dynamic>;
+      
+      // Handle potential DateTime format issues from Supabase
+      if (responseMap['analyzed_at'] != null && responseMap['analyzed_at'] is! String) {
+        responseMap['analyzed_at'] = responseMap['analyzed_at'].toString();
+      }
+      if (responseMap['created_at'] != null && responseMap['created_at'] is! String) {
+        responseMap['created_at'] = responseMap['created_at'].toString();
+      }
+
+      final analysis = Analysis.fromJson(responseMap);
       return ServiceResult.success(analysis);
     } catch (e) {
       return ServiceResult.failure(
@@ -190,7 +220,7 @@ class AnalysisService {
 
       // Extract unique languages
       final Set<String> languagesSet = {};
-      for (final record in response) {
+      for (final record in (response as List<dynamic>)) {
         final language = record['repository_language'] as String?;
         if (language != null && language.isNotEmpty) {
           languagesSet.add(language);
@@ -214,7 +244,7 @@ class AnalysisService {
           .from(AppConfig.analysesTable)
           .select('id');
 
-      final totalCount = totalCountResponse.length;
+      final totalCount = (totalCountResponse as List<dynamic>).length;
 
       // Get count by collection type
       final trendingCountResponse = await _client
@@ -240,15 +270,16 @@ class AnalysisService {
           .limit(1);
 
       String? latestAnalysisDate;
-      if (latestAnalysisResponse.isNotEmpty) {
-        latestAnalysisDate = latestAnalysisResponse[0]['analyzed_at'];
+      final latestAnalysisList = latestAnalysisResponse as List<dynamic>;
+      if (latestAnalysisList.isNotEmpty) {
+        latestAnalysisDate = latestAnalysisList[0]['analyzed_at'];
       }
 
       final statistics = {
         'total_analyses': totalCount,
-        'trending_count': trendingCountResponse.length,
-        'fast_growing_count': fastGrowingCountResponse.length,
-        'newly_published_count': newlyPublishedCountResponse.length,
+        'trending_count': (trendingCountResponse as List<dynamic>).length,
+        'fast_growing_count': (fastGrowingCountResponse as List<dynamic>).length,
+        'newly_published_count': (newlyPublishedCountResponse as List<dynamic>).length,
         'latest_analysis_date': latestAnalysisDate,
       };
 
