@@ -317,9 +317,29 @@ npm run typecheck
 3. **微信发布**: 需要微信公众号的相应权限
 4. **数据库**: 推荐使用 Supabase 的免费层进行开发测试
 
+## 故障排除
+
+### Flutter 应用常见问题
+
+#### 类型转换错误
+**问题**: `type 'List<dynamic>' is not a subtype of type 'List<Analysis>'`
+
+**解决方案**: 此问题已在 v1.2.2 中修复。如遇到类似问题：
+1. 确保使用最新版本的应用
+2. 检查 Supabase 数据库中的 DateTime 字段格式
+3. 查看应用日志中的详细错误信息
+
+**技术说明**: Supabase 返回的 DateTime 字段可能不是标准字符串格式，需要在 JSON 序列化前进行格式转换。
+
+#### Supabase 连接问题
+1. 确认 `.env` 文件配置正确
+2. 检查 Supabase URL 和 Key 的有效性
+3. 验证网络连接
+
 ## 更新记录
 
 - **v1.0.0**: 初始版本，基础雷达功能
 - **v1.1.0**: 模块化重构，添加数据库支持和 AI 分析功能
 - **v1.2.0**: 新增 Flutter 移动应用，支持跨平台新闻浏览体验
 - **v1.2.1**: 优化架构，Flutter 应用直连 Supabase 数据库
+- **v1.2.2**: 修复 Flutter 应用中的类型转换错误，提升 DateTime 字段处理的稳定性
