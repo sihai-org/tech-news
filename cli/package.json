@@ -13,6 +13,11 @@
     "typecheck": "tsc --noEmit",
     "daily": "npm run build && node dist/index.js daily",
     "analyze-top": "npm run build && node dist/index.js analyze-top",
+    "analyze-missing": "npm run build && node dist/index.js analyze-missing",
+    "analyze-missing:preview": "npm run build && node dist/index.js analyze-missing --dry-run --limit 10",
+    "analyze-missing:small": "npm run build && node dist/index.js analyze-missing --limit 5 --delay 5000",
+    "analyze-missing:medium": "npm run build && node dist/index.js analyze-missing --limit 20 --delay 3000",
+    "analyze-missing:stats": "npm run build && node dist/index.js analyze-missing --dry-run --limit 1",
     "publish-wechat": "npm run build && node dist/index.js publish-wechat",
     "publish-latest": "npm run build && node dist/index.js publish-wechat --latest",
     "list-analyses": "npm run build && node dist/index.js publish-wechat --list"
