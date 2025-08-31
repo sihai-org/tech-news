@@ -2,25 +2,40 @@
 
 Flutter 应用现在直接连接到 Supabase 数据库，无需中间 API 服务器。
 
-## 1. 获取 Supabase 配置
+## 1. 配置 .env 文件（推荐方式）
 
-### 方式一：从环境变量（推荐）
+### 步骤 1：复制环境变量模板
 ```bash
-# 在运行应用时设置环境变量
-export SUPABASE_URL="your_supabase_project_url"
-export SUPABASE_ANON_KEY="your_supabase_anon_key"
-
-# 然后运行应用
-flutter run --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
+cp .env.example .env
 ```
 
-### 方式二：直接修改代码
-打开 `lib/config/app_config.dart` 文件，替换默认值：
+### 步骤 2：编辑 .env 文件
+打开 `.env` 文件，填入你的 Supabase 配置：
 
-```dart
-static const String supabaseUrl = 'https://your-project-id.supabase.co';
-static const String supabaseAnonKey = 'your-anon-key-here';
+```env
+# Supabase Configuration
+SUPABASE_URL=https://your-project-id.supabase.co
+SUPABASE_ANON_KEY=your-supabase-anon-key-here
+
+# App Configuration (Optional)
+APP_NAME=GitHub Radar News
+APP_VERSION=1.2.1
 ```
+
+### 步骤 3：运行应用
+```bash
+flutter run
+```
+
+## 2. 替代配置方式
+
+### 方式二：命令行环境变量
+```bash
+flutter run --dart-define=SUPABASE_URL=your_url --dart-define=SUPABASE_ANON_KEY=your_key
+```
+
+### 方式三：直接修改代码（不推荐）
+修改 `lib/config/app_config.dart` 中的默认值（不建议用于生产环境）
 
 ## 2. 获取 Supabase 凭证
 

@@ -45,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: _showSearch ? _buildSearchField() : const Text(AppConfig.appName),
+        title: _showSearch ? _buildSearchField() : Text(AppConfig.appName),
         actions: [
           IconButton(
             icon: Icon(_showSearch ? Icons.close : Icons.search),

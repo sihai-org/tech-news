@@ -219,16 +219,23 @@ flutter build ios --release
 #### 3. 配置 Supabase 连接
 Flutter 应用直接连接到 Supabase 数据库，无需中间 API 服务器。
 
-**方式一：使用环境变量（推荐）**
+**推荐方式：使用 .env 文件**
 ```bash
-flutter run --dart-define=SUPABASE_URL=your_supabase_url --dart-define=SUPABASE_ANON_KEY=your_supabase_key
+# 1. 复制环境变量模板
+cp mobile_app/.env.example mobile_app/.env
+
+# 2. 编辑 .env 文件，填入你的 Supabase 配置
+# SUPABASE_URL=https://your-project-id.supabase.co
+# SUPABASE_ANON_KEY=your-supabase-anon-key-here
+
+# 3. 运行应用
+cd mobile_app
+flutter run
 ```
 
-**方式二：修改配置文件**
-编辑 `mobile_app/lib/config/app_config.dart`：
-```dart
-static const String supabaseUrl = 'https://your-project-id.supabase.co';
-static const String supabaseAnonKey = 'your-anon-key-here';
+**替代方式：命令行参数**
+```bash
+flutter run --dart-define=SUPABASE_URL=your_url --dart-define=SUPABASE_ANON_KEY=your_key
 ```
 
 详细配置指南请查看：`mobile_app/SUPABASE_SETUP.md`
