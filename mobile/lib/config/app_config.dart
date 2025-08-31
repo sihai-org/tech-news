@@ -1,29 +1,43 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'build_config.dart';
 
 class AppConfig {
-  // Build-time configuration (will be replaced by CI/CD)
-  static const String _buildTimeSupabaseUrl = 'BUILD_TIME_SUPABASE_URL';
-  static const String _buildTimeSupabaseAnonKey = 'BUILD_TIME_SUPABASE_ANON_KEY';
-
-  // Supabase Configuration - Priority: build-time constants > .env file > defaults
+  // Supabase Configuration - Priority: build-time config > .env file > defaults
   static String get supabaseUrl {
-    // Check if build-time configuration was injected
-    if (_buildTimeSupabaseUrl != 'BUILD_TIME_SUPABASE_URL' && _buildTimeSupabaseUrl.isNotEmpty) {
-      return _buildTimeSupabaseUrl;
+    // Check if build-time configuration is valid
+    if (BuildConfig.hasValidConfig) {
+      debugPrint('Using build-time Supabase URL');
+      return BuildConfig.supabaseUrl;
     }
     
     // Fall back to .env file
-    return dotenv.env['SUPABASE_URL'] ?? 'YOUR_SUPABASE_URL_HERE';
+    final envUrl = dotenv.env['SUPABASE_URL'];
+    if (envUrl != null && envUrl.isNotEmpty) {
+      debugPrint('Using .env Supabase URL');
+      return envUrl;
+    }
+    
+    debugPrint('Using default Supabase URL - this will likely fail');
+    return 'YOUR_SUPABASE_URL_HERE';
   }
           
   static String get supabaseAnonKey {
-    // Check if build-time configuration was injected
-    if (_buildTimeSupabaseAnonKey != 'BUILD_TIME_SUPABASE_ANON_KEY' && _buildTimeSupabaseAnonKey.isNotEmpty) {
-      return _buildTimeSupabaseAnonKey;
+    // Check if build-time configuration is valid
+    if (BuildConfig.hasValidConfig) {
+      debugPrint('Using build-time Supabase ANON Key');
+      return BuildConfig.supabaseAnonKey;
     }
     
     // Fall back to .env file
-    return dotenv.env['SUPABASE_ANON_KEY'] ?? 'YOUR_SUPABASE_ANON_KEY_HERE';
+    final envKey = dotenv.env['SUPABASE_ANON_KEY'];
+    if (envKey != null && envKey.isNotEmpty) {
+      debugPrint('Using .env Supabase ANON Key');
+      return envKey;
+    }
+    
+    debugPrint('Using default Supabase ANON Key - this will likely fail');
+    return 'YOUR_SUPABASE_ANON_KEY_HERE';
   }
   
   // App Configuration - Priority: compile-time constants > .env file > defaults
