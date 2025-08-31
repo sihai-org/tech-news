@@ -4,7 +4,7 @@ import { loadConfig } from '../utils/config.js';
 import { trending, fastestGrowing, newlyPublished } from '../core/radar.js';
 import { analyzeRepo } from '../core/analyzer.js';
 import { saveAnalysisToSupabase } from '../services/supabase.js';
-import { extractTitle } from '../utils/title-extractor.js';
+import { extractTitleAndContent } from '../utils/title-extractor.js';
 import { GitHubRepo, CollectionConfig } from '../types/index.js';
 
 async function getTop1FromCollection(
@@ -117,8 +117,8 @@ export async function analyzeTopCommand(options: {
         // Analyze the repository
         const analysis = await analyzeRepo(topRepo);
         
-        // Extract title from analysis content
-        const title = extractTitle(analysis.analysis);
+        // Extract title and clean content
+        const { title, content: cleanedAnalysis } = extractTitleAndContent(analysis.analysis);
         console.log(`  📝 Extracted title: ${title}`);
         
         // Save to database if enabled
@@ -127,7 +127,7 @@ export async function analyzeTopCommand(options: {
             await saveAnalysisToSupabase({
               repo: topRepo,
               title: title,
-              analysis: analysis.analysis,
+              analysis: cleanedAnalysis, // Use cleaned analysis without title line
               markdown: analysis.markdown,
               collectionName: collection.name,
               collectionType: collection.type,
