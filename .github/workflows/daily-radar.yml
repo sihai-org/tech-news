@@ -1,0 +1,60 @@
+name: Daily GitHub Radar Collection
+
+on:
+  # Run daily at 3 AM UTC (11 AM Beijing time)
+  schedule:
+    - cron: '0 3 * * *'
+  
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  daily-radar:
+    name: Run Daily Radar Collection
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    environment: cli-env
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: cli/package-lock.json
+        
+    - name: Install CLI dependencies
+      working-directory: cli
+      run: npm ci
+      
+    - name: Build CLI
+      working-directory: cli
+      run: npm run build
+      
+    - name: Run daily radar collection
+      working-directory: cli
+      env:
+        API_GH_TOKEN: ${{ secrets.API_GH_TOKEN }}
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      run: |
+        echo "🚀 Starting daily GitHub radar collection..."
+        echo "⏰ Started at: $(date)"
+        
+        npm run daily
+        
+        echo "✅ Daily radar collection completed at: $(date)"
+        
+    - name: Upload collection logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: daily-radar-logs-${{ github.run_number }}
+        path: |
+          cli/logs/
+          cli/data/
+          cli/reports/
+        retention-days: 7
