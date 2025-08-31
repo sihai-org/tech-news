@@ -32,7 +32,7 @@ async function main(): Promise<void> {
   program
     .command('daily')
     .description('Run daily radar based on config file')
-    .option('-c, --config <path>', 'Path to config file', './radar-config.json')
+    .option('-c, --config <path>', 'Path to config file', '../shared/config/radar-config.json')
     .action(async (options) => {
       if (!process.env.GITHUB_TOKEN) {
         console.error('WARNING: GITHUB_TOKEN not set. You may hit low rate limits.');
@@ -52,7 +52,7 @@ async function main(): Promise<void> {
   program
     .command('analyze-top')
     .description('Analyze top #1 repository from each collection')
-    .option('-c, --config <path>', 'Path to config file', './radar-config.json')
+    .option('-c, --config <path>', 'Path to config file', '../shared/config/radar-config.json')
     .option('-o, --output <dir>', 'Output directory for reports', './reports')
     .option('-d, --delay <ms>', 'Delay between analyses (ms)', '5000')
     .option('--no-save-to-db', 'Skip saving to database')
