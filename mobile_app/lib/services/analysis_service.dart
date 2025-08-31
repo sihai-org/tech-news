@@ -1,12 +1,17 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../config/app_config.dart';
 import '../models/models.dart';
-import 'http_client.dart';
+import 'supabase_client.dart';
+import 'service_result.dart';
 
 class AnalysisService {
   static final AnalysisService _instance = AnalysisService._internal();
   factory AnalysisService() => _instance;
   AnalysisService._internal();
 
-  final HttpClient _httpClient = HttpClient();
+  final SupabaseClientService _supabaseClient = SupabaseClientService();
+  
+  SupabaseClient get _client => _supabaseClient.client;
 
   /// Get paginated list of analyses
   Future<ServiceResult<PaginatedResponse<Analysis>>> getAnalyses({
@@ -17,36 +22,65 @@ class AnalysisService {
     String? searchQuery,
   }) async {
     try {
-      final queryParams = <String, dynamic>{
-        'page': page,
-        'per_page': perPage,
-      };
+      // Calculate offset for pagination
+      final offset = (page - 1) * perPage;
+      
+      // Build the query
+      PostgrestFilterBuilder query = _client
+          .from(AppConfig.analysesTable)
+          .select('*');
 
+      // Apply filters
       if (language != null && language.isNotEmpty) {
-        queryParams['language'] = language;
+        query = query.eq('repository_language', language);
       }
       if (collectionType != null && collectionType.isNotEmpty) {
-        queryParams['collection_type'] = collectionType;
+        query = query.eq('collection_type', collectionType);
       }
       if (searchQuery != null && searchQuery.isNotEmpty) {
-        queryParams['search'] = searchQuery;
+        query = query.or('title.ilike.%$searchQuery%,analysis_content.ilike.%$searchQuery%,repository_full_name.ilike.%$searchQuery%');
       }
 
-      final response = await _httpClient.get<Map<String, dynamic>>(
-        '/analyses',
-        queryParameters: queryParams,
-      );
+      // Execute query with pagination and ordering
+      final response = await query
+          .order('analyzed_at', ascending: false)
+          .range(offset, offset + perPage - 1);
 
-      final paginatedResponse = PaginatedResponse<Analysis>.fromJson(
-        response,
-        (json) => Analysis.fromJson(json as Map<String, dynamic>),
+      // Build count query with same filters
+      PostgrestFilterBuilder countQuery = _client
+          .from(AppConfig.analysesTable)
+          .select('id');
+
+      // Apply same filters for count
+      if (language != null && language.isNotEmpty) {
+        countQuery = countQuery.eq('repository_language', language);
+      }
+      if (collectionType != null && collectionType.isNotEmpty) {
+        countQuery = countQuery.eq('collection_type', collectionType);
+      }
+      if (searchQuery != null && searchQuery.isNotEmpty) {
+        countQuery = countQuery.or('title.ilike.%$searchQuery%,analysis_content.ilike.%$searchQuery%,repository_full_name.ilike.%$searchQuery%');
+      }
+
+      final countResult = await countQuery;
+      final total = countResult.length;
+      final totalPages = (total / perPage).ceil();
+
+      // Convert response to Analysis objects
+      final analyses = response
+          .map((json) => Analysis.fromJson(json as Map<String, dynamic>))
+          .toList();
+
+      final paginatedResponse = PaginatedResponse<Analysis>(
+        data: analyses,
+        total: total,
+        currentPage: page,
+        perPage: perPage,
+        totalPages: totalPages,
       );
 
       return ServiceResult.success(paginatedResponse);
     } catch (e) {
-      if (e is ApiError) {
-        return ServiceResult.failure(e);
-      }
       return ServiceResult.failure(
         ApiError(message: 'Failed to fetch analyses: $e'),
       );
@@ -56,16 +90,15 @@ class AnalysisService {
   /// Get a single analysis by ID
   Future<ServiceResult<Analysis>> getAnalysisById(String id) async {
     try {
-      final response = await _httpClient.get<Map<String, dynamic>>(
-        '/analyses/$id',
-      );
+      final response = await _client
+          .from(AppConfig.analysesTable)
+          .select('*')
+          .eq('id', id)
+          .single();
 
       final analysis = Analysis.fromJson(response);
       return ServiceResult.success(analysis);
     } catch (e) {
-      if (e is ApiError) {
-        return ServiceResult.failure(e);
-      }
       return ServiceResult.failure(
         ApiError(message: 'Failed to fetch analysis: $e'),
       );
@@ -150,19 +183,23 @@ class AnalysisService {
   /// Get available languages from analyses
   Future<ServiceResult<List<String>>> getAvailableLanguages() async {
     try {
-      final response = await _httpClient.get<Map<String, dynamic>>(
-        '/analyses/languages',
-      );
+      final response = await _client
+          .from(AppConfig.analysesTable)
+          .select('repository_language')
+          .not('repository_language', 'is', null);
 
-      final languages = (response['languages'] as List)
-          .map((lang) => lang.toString())
-          .toList();
+      // Extract unique languages
+      final Set<String> languagesSet = {};
+      for (final record in response) {
+        final language = record['repository_language'] as String?;
+        if (language != null && language.isNotEmpty) {
+          languagesSet.add(language);
+        }
+      }
 
+      final languages = languagesSet.toList()..sort();
       return ServiceResult.success(languages);
     } catch (e) {
-      if (e is ApiError) {
-        return ServiceResult.failure(e);
-      }
       return ServiceResult.failure(
         ApiError(message: 'Failed to fetch available languages: $e'),
       );
@@ -172,15 +209,51 @@ class AnalysisService {
   /// Get analysis statistics
   Future<ServiceResult<Map<String, dynamic>>> getStatistics() async {
     try {
-      final response = await _httpClient.get<Map<String, dynamic>>(
-        '/analyses/stats',
-      );
+      // Get total count
+      final totalCountResponse = await _client
+          .from(AppConfig.analysesTable)
+          .select('id');
 
-      return ServiceResult.success(response);
-    } catch (e) {
-      if (e is ApiError) {
-        return ServiceResult.failure(e);
+      final totalCount = totalCountResponse.length;
+
+      // Get count by collection type
+      final trendingCountResponse = await _client
+          .from(AppConfig.analysesTable)
+          .select('id')
+          .eq('collection_type', 'trending');
+
+      final fastGrowingCountResponse = await _client
+          .from(AppConfig.analysesTable)
+          .select('id')
+          .eq('collection_type', 'fastest_growing');
+
+      final newlyPublishedCountResponse = await _client
+          .from(AppConfig.analysesTable)
+          .select('id')
+          .eq('collection_type', 'newly_published');
+
+      // Get latest analysis date
+      final latestAnalysisResponse = await _client
+          .from(AppConfig.analysesTable)
+          .select('analyzed_at')
+          .order('analyzed_at', ascending: false)
+          .limit(1);
+
+      String? latestAnalysisDate;
+      if (latestAnalysisResponse.isNotEmpty) {
+        latestAnalysisDate = latestAnalysisResponse[0]['analyzed_at'];
       }
+
+      final statistics = {
+        'total_analyses': totalCount,
+        'trending_count': trendingCountResponse.length,
+        'fast_growing_count': fastGrowingCountResponse.length,
+        'newly_published_count': newlyPublishedCountResponse.length,
+        'latest_analysis_date': latestAnalysisDate,
+      };
+
+      return ServiceResult.success(statistics);
+    } catch (e) {
       return ServiceResult.failure(
         ApiError(message: 'Failed to fetch statistics: $e'),
       );

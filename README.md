@@ -15,12 +15,14 @@ GitHub Open Source Radar - 发现趋势项目、快速增长项目和新发布�
 - **微信发布**: 自动发布分析报告到微信公众号草稿
 
 ### 移动端应用 (Flutter)
+- **直连数据库**: 直接连接 Supabase，无需中间 API 服务器
 - **新闻浏览**: 以新闻形式展示 AI 生成的项目分析报告
 - **分类筛选**: 按编程语言和收集类型筛选内容
 - **搜索功能**: 搜索特定的分析报告
 - **下拉刷新**: 获取最新分析内容
 - **无限滚动**: 分页加载更多内容
 - **离线缓存**: 支持基本的离线阅读
+- **实时更新**: 利用 Supabase 实时功能（可扩展）
 
 ## 项目架构
 
@@ -214,15 +216,22 @@ flutter build apk --release
 flutter build ios --release
 ```
 
-#### 3. 配置后端连接
-修改 `mobile_app/lib/config/app_config.dart` 中的 API 配置：
+#### 3. 配置 Supabase 连接
+Flutter 应用直接连接到 Supabase 数据库，无需中间 API 服务器。
 
-```dart
-// API Configuration
-static const String baseUrl = 'http://your-api-server:3000'; // 你的后端API地址
-static const String supabaseUrl = 'your_supabase_url';      // Supabase配置
-static const String supabaseAnonKey = 'your_supabase_key'; 
+**方式一：使用环境变量（推荐）**
+```bash
+flutter run --dart-define=SUPABASE_URL=your_supabase_url --dart-define=SUPABASE_ANON_KEY=your_supabase_key
 ```
+
+**方式二：修改配置文件**
+编辑 `mobile_app/lib/config/app_config.dart`：
+```dart
+static const String supabaseUrl = 'https://your-project-id.supabase.co';
+static const String supabaseAnonKey = 'your-anon-key-here';
+```
+
+详细配置指南请查看：`mobile_app/SUPABASE_SETUP.md`
 
 #### 4. 应用功能
 - **首页**: 展示所有分析报告，支持按语言和类型筛选
@@ -306,3 +315,4 @@ npm run typecheck
 - **v1.0.0**: 初始版本，基础雷达功能
 - **v1.1.0**: 模块化重构，添加数据库支持和 AI 分析功能
 - **v1.2.0**: 新增 Flutter 移动应用，支持跨平台新闻浏览体验
+- **v1.2.1**: 优化架构，Flutter 应用直连 Supabase 数据库

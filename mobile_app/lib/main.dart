@@ -11,7 +11,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Initialize services
-  HttpClient().initialize();
+  await SupabaseClientService.initialize();
   await CacheService().initialize();
   
   runApp(const GitHubRadarApp());
