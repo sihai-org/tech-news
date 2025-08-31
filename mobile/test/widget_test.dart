@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
-import 'package:github_radar_news/config/app_config.dart';
 import 'package:github_radar_news/config/app_theme.dart';
 import 'package:github_radar_news/providers/analysis_provider.dart';
 

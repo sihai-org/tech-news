@@ -116,7 +116,7 @@ class AnalysisService {
           .eq('id', id)
           .single();
 
-      final responseMap = response as Map<String, dynamic>;
+      final responseMap = response;
       
       // Handle potential DateTime format issues from Supabase
       if (responseMap['analyzed_at'] != null && responseMap['analyzed_at'] is! String) {
@@ -220,7 +220,7 @@ class AnalysisService {
 
       // Extract unique languages
       final Set<String> languagesSet = {};
-      for (final record in (response as List<dynamic>)) {
+      for (final record in response) {
         final language = record['repository_language'] as String?;
         if (language != null && language.isNotEmpty) {
           languagesSet.add(language);
@@ -244,7 +244,7 @@ class AnalysisService {
           .from(AppConfig.analysesTable)
           .select('id');
 
-      final totalCount = (totalCountResponse as List<dynamic>).length;
+      final totalCount = totalCountResponse.length;
 
       // Get count by collection type
       final trendingCountResponse = await _client
@@ -270,16 +270,16 @@ class AnalysisService {
           .limit(1);
 
       String? latestAnalysisDate;
-      final latestAnalysisList = latestAnalysisResponse as List<dynamic>;
+      final latestAnalysisList = latestAnalysisResponse;
       if (latestAnalysisList.isNotEmpty) {
         latestAnalysisDate = latestAnalysisList[0]['analyzed_at'];
       }
 
       final statistics = {
         'total_analyses': totalCount,
-        'trending_count': (trendingCountResponse as List<dynamic>).length,
-        'fast_growing_count': (fastGrowingCountResponse as List<dynamic>).length,
-        'newly_published_count': (newlyPublishedCountResponse as List<dynamic>).length,
+        'trending_count': trendingCountResponse.length,
+        'fast_growing_count': fastGrowingCountResponse.length,
+        'newly_published_count': newlyPublishedCountResponse.length,
         'latest_analysis_date': latestAnalysisDate,
       };
 
