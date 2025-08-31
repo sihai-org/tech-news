@@ -221,6 +221,20 @@
   "api": {
     "perPage": 50,
     "maxPages": 2,
-    "rateLimitDelay": 200
+    "rateLimitDelay": 200,
+    "typeSettings": {
+      "trending": {
+        "perPage": 50,
+        "maxPages": 2
+      },
+      "fastest_growing": {
+        "perPage": 50,
+        "maxPages": 2
+      },
+      "newly_published": {
+        "perPage": 10,
+        "maxPages": 1
+      }
+    }
   }
 }

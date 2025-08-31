@@ -34,12 +34,11 @@ async function runCollection(
       break;
       
     case 'newly_published':
-      // For newly_published, limit to only 10 repositories
       repositories = await newlyPublished(
         collection.language,
         collection.days,
-        10, // Fixed to 10 per page
-        1   // Only 1 page, so total = 10 repositories
+        perPage,
+        maxPages
       );
       break;
       
@@ -69,10 +68,15 @@ export async function runDailyRadar(configPath?: string): Promise<void> {
       console.log(`  • ${collection.name} (${collection.type})`);
       
       try {
+        // Get type-specific settings or fall back to defaults
+        const typeSettings = config.api.typeSettings?.[collection.type];
+        const perPage = typeSettings?.perPage ?? config.api.perPage;
+        const maxPages = typeSettings?.maxPages ?? config.api.maxPages;
+        
         const result = await runCollection(
           collection,
-          config.api.perPage,
-          config.api.maxPages
+          perPage,
+          maxPages
         );
         results.push(result);
         

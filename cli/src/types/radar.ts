@@ -53,6 +53,12 @@ export interface RadarConfig {
     perPage: number;
     maxPages: number;
     rateLimitDelay: number;
+    typeSettings?: {
+      [key: string]: {
+        perPage: number;
+        maxPages: number;
+      };
+    };
   };
 }
 
