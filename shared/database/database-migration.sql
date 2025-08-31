@@ -18,9 +18,18 @@ WHERE id NOT IN (
   ORDER BY html_url, discovered_at DESC
 );
 
--- Add unique constraint to html_url column
-ALTER TABLE github_radar_repositories 
-ADD CONSTRAINT IF NOT EXISTS unique_html_url UNIQUE (html_url);
+-- Add unique constraint to html_url column (only if it doesn't exist)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint 
+    WHERE conname = 'unique_html_url' 
+    AND contype = 'u'
+  ) THEN
+    ALTER TABLE github_radar_repositories 
+    ADD CONSTRAINT unique_html_url UNIQUE (html_url);
+  END IF;
+END $$;
 
 -- Create index on html_url for better upsert performance (if not exists)
 CREATE INDEX IF NOT EXISTS idx_github_radar_repositories_html_url ON github_radar_repositories(html_url);
