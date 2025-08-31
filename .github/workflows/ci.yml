@@ -59,6 +59,14 @@ jobs:
       working-directory: mobile
       run: flutter pub get
       
+    - name: Create test .env file
+      working-directory: mobile
+      run: |
+        echo "SUPABASE_URL=https://test.supabase.co" > .env
+        echo "SUPABASE_ANON_KEY=test-key" >> .env
+        echo "APP_NAME=GitHub Radar News" >> .env
+        echo "APP_VERSION=1.3.0" >> .env
+      
     - name: Analyze code
       working-directory: mobile
       run: flutter analyze
