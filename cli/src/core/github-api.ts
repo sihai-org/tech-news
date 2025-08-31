@@ -2,7 +2,7 @@ import fetch from 'node-fetch';
 import { GitHubRepo, SearchResponse } from '../types/index.js';
 
 const GITHUB_API = 'https://api.github.com';
-const TOKEN = process.env.API_TOKEN;
+const TOKEN = process.env.API_GH_TOKEN;
 
 function getHeaders(): Record<string, string> {
   const headers: Record<string, string> = {

@@ -16,8 +16,8 @@ export async function analyzeCommand(repoName: string, options: {
       process.exit(1);
     }
 
-    if (!process.env.API_TOKEN) {
-      console.warn('⚠️  API_TOKEN not set. You may hit rate limits.');
+    if (!process.env.API_GH_TOKEN) {
+      console.warn('⚠️  API_GH_TOKEN not set. You may hit rate limits.');
     }
 
     // Get repository info
