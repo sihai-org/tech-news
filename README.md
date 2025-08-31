@@ -171,6 +171,8 @@ APP_VERSION=1.2.2                            # 应用版本
 
 ### 🔧 构建和开发
 
+### 本地开发构建
+
 ```bash
 # 构建所有项目
 ./scripts/build-all.sh
@@ -180,6 +182,40 @@ cd cli && npm run build
 
 # 单独构建移动应用
 cd mobile && flutter build apk --release
+```
+
+### GitHub Actions 自动构建
+
+项目配置了完整的 CI/CD 流水线，支持自动构建和发布移动应用。
+
+#### 🚀 自动发布流程
+
+**方法 1: 标签发布（推荐）**
+```bash
+# 创建并推送版本标签
+git tag v1.3.0
+git push origin v1.3.0
+```
+
+**方法 2: 手动触发**
+1. 进入 GitHub Actions 页面
+2. 选择 "Build and Release Mobile App" 工作流
+3. 点击 "Run workflow" 手动触发
+
+#### 📱 构建产物
+
+自动构建会生成以下文件：
+- **Android APK**: `github-radar-news-v*.*.*.android.apk` - 直接安装使用
+- **Android AAB**: `github-radar-news-v*.*.*.android.aab` - Google Play Store 发布
+- **iOS IPA**: `github-radar-news-v*.*.*.ios.ipa` - 侧载安装或 TestFlight 分发
+
+#### ⚙️ GitHub Secrets 配置
+
+在 GitHub 仓库设置中需要配置以下 Secrets：
+
+```
+SUPABASE_URL=https://your-project-id.supabase.co
+SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
 ### 💻 CLI 工具使用
@@ -411,4 +447,4 @@ npm run typecheck
 - **v1.2.0**: 新增 Flutter 移动应用，支持跨平台新闻浏览体验
 - **v1.2.1**: 优化架构，Flutter 应用直连 Supabase 数据库
 - **v1.2.2**: 修复 Flutter 应用中的类型转换错误，提升 DateTime 字段处理的稳定性
-- **v1.3.0**: 重构为 Monorepo 架构，分离 CLI 工具和移动应用，提升开发效率和项目维护性
+- **v1.3.0**: 重构为 Monorepo 架构，分离 CLI 工具和移动应用，提升开发效率和项目维护性，新增 GitHub Actions 自动构建和发布
