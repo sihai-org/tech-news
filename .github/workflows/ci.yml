@@ -67,13 +67,13 @@ jobs:
         echo "APP_NAME=GitHub Radar News" >> .env
         echo "APP_VERSION=1.3.0" >> .env
       
-    - name: Analyze code
-      working-directory: mobile
-      run: flutter analyze
-      
     - name: Generate code
       working-directory: mobile
       run: flutter packages pub run build_runner build --delete-conflicting-outputs
+      
+    - name: Analyze code
+      working-directory: mobile
+      run: flutter analyze
       
     - name: Run tests
       working-directory: mobile
