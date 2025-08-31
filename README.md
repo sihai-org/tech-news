@@ -4,9 +4,28 @@ GitHub Open Source Radar - 发现趋势项目、快速增长项目和新发布�
 
 ## 项目概述
 
-这是一个完整的 GitHub 项目趋势监控和分析解决方案，包含后端 CLI 工具和移动端应用。主要功能包括：
+这是一个完整的 GitHub 项目趋势监控和分析解决方案，采用 **Monorepo** 架构，包含后端 CLI 工具和移动端应用。
 
-### 后端 CLI 工具 (TypeScript)
+### 🏗️ 项目结构
+
+```
+github-radar/
+├── cli/                    # CLI 工具和服务端
+│   ├── src/               # TypeScript 源码
+│   ├── package.json       # CLI 依赖配置
+│   └── README.md          # CLI 详细文档
+├── mobile/                # Flutter 移动应用
+│   ├── lib/               # Flutter 源码
+│   ├── pubspec.yaml       # Flutter 依赖配置
+│   └── README.md          # Mobile 详细文档
+├── shared/                # 共享资源
+│   ├── database/          # 数据库 Schema 和迁移
+│   └── config/            # 配置文件
+├── scripts/               # 构建和部署脚本
+└── docs/                  # 项目文档
+```
+
+### 🛠️ 后端 CLI 工具 (TypeScript)
 - **趋势发现**: 发现指定语言和时间窗口内的趋势项目
 - **快速增长监测**: 找出增长最快的项目（按星标增长速度）
 - **新项目追踪**: 监控新发布的有潜力的项目
@@ -14,7 +33,7 @@ GitHub Open Source Radar - 发现趋势项目、快速增长项目和新发布�
 - **数据存储**: 支持 Supabase 数据库存储分析结果
 - **微信发布**: 自动发布分析报告到微信公众号草稿
 
-### 移动端应用 (Flutter)
+### 📱 移动端应用 (Flutter)
 - **直连数据库**: 直接连接 Supabase，无需中间 API 服务器
 - **新闻浏览**: 以新闻形式展示 AI 生成的项目分析报告
 - **分类筛选**: 按编程语言和收集类型筛选内容
@@ -85,16 +104,52 @@ mobile_app/lib/
     └── analysis_metadata.dart # 分析元数据组件
 ```
 
-## 安装和配置
+## 快速开始
 
-### 1. 安装依赖
+### 🚀 一键安装和配置
 ```bash
-npm install
+# 克隆项目
+git clone <repository-url>
+cd github-radar
+
+# 运行安装脚本（会自动安装所有依赖）
+./scripts/setup.sh
 ```
 
-### 2. 环境配置
-复制 `.env.example` 到 `.env` 并配置所需的环境变量：
+### ✋ 手动安装步骤
 
+#### 1. 环境要求
+- **Node.js** >= 16.x
+- **Flutter** >= 3.2.4
+- **npm** 或 **yarn**
+
+#### 2. 安装 CLI 工具
+```bash
+cd cli
+npm install
+cp .env.example .env
+# 编辑 .env 文件配置你的 API 密钥
+npm run build
+```
+
+#### 3. 安装移动应用
+```bash
+cd mobile
+flutter pub get
+cp .env.example .env
+# 编辑 .env 文件配置你的 Supabase 连接
+flutter packages pub run build_runner build
+```
+
+#### 4. 数据库设置
+在 Supabase SQL Editor 中运行 `shared/database/schema.sql` 创建必要的表结构。
+
+#### 5. 配置文件
+修改 `shared/config/radar-config.json` 配置雷达收集策略。
+
+### 📋 环境变量配置
+
+**CLI 工具** (`cli/.env`):
 ```bash
 GITHUB_TOKEN=your_github_token_here          # GitHub API Token
 SUPABASE_URL=your_supabase_project_url       # Supabase 项目 URL
@@ -104,38 +159,33 @@ WECHAT_APP_ID=your_wechat_app_id             # 微信 App ID
 WECHAT_APP_SECRET=your_wechat_app_secret     # 微信 App Secret
 ```
 
-### 3. 数据库设置
-如果使用 Supabase 存储，需要在 Supabase SQL Editor 中运行 `database-schema.sql` 创建必要的表结构。
-
-### 4. 配置文件
-修改 `radar-config.json` 配置雷达收集策略：
-
-```json
-{
-  "collections": [
-    {
-      "name": "trending_typescript",
-      "type": "trending",
-      "language": "TypeScript", 
-      "days": 7,
-      "minStars": 5
-    }
-  ],
-  "output": {
-    "type": "supabase",
-    "directory": "./data",
-    "format": "json"
-  }
-}
+**移动应用** (`mobile/.env`):
+```bash
+SUPABASE_URL=your_supabase_project_url       # Supabase 项目 URL
+SUPABASE_ANON_KEY=your_supabase_anon_key     # Supabase 匿名密钥
+APP_NAME=GitHub Radar News                   # 应用名称
+APP_VERSION=1.2.2                            # 应用版本
 ```
 
 ## 使用方法
 
-### 基本命令
+### 🔧 构建和开发
 
 ```bash
-# 构建项目
-npm run build
+# 构建所有项目
+./scripts/build-all.sh
+
+# 单独构建 CLI
+cd cli && npm run build
+
+# 单独构建移动应用
+cd mobile && flutter build apk --release
+```
+
+### 💻 CLI 工具使用
+
+```bash
+cd cli
 
 # 交互式搜索
 npm run dev search
@@ -151,6 +201,24 @@ npm run analyze-top
 
 # 发布到微信公众号
 npm run publish-wechat --latest
+```
+
+### 📱 移动应用开发
+
+```bash
+cd mobile
+
+# 开发模式运行
+flutter run
+
+# 生成代码
+flutter packages pub run build_runner build
+
+# 构建 APK
+flutter build apk --release
+
+# 构建 iOS (需要 macOS)
+flutter build ios --release
 ```
 
 ### 详细命令说明
@@ -343,3 +411,4 @@ npm run typecheck
 - **v1.2.0**: 新增 Flutter 移动应用，支持跨平台新闻浏览体验
 - **v1.2.1**: 优化架构，Flutter 应用直连 Supabase 数据库
 - **v1.2.2**: 修复 Flutter 应用中的类型转换错误，提升 DateTime 字段处理的稳定性
+- **v1.3.0**: 重构为 Monorepo 架构，分离 CLI 工具和移动应用，提升开发效率和项目维护性

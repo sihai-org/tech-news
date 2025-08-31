@@ -3,7 +3,10 @@
     "allow": [
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(flutter:*)"
+      "Bash(flutter:*)",
+      "Read(/Users/zhefeng/development/Repositories/**)",
+      "Bash(chmod:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []

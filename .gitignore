@@ -1,12 +1,13 @@
-# Dependencies
-node_modules/
-
-# Build output
-dist/
+# CLI Dependencies and Build output
+cli/node_modules/
+cli/dist/
+cli/temp/
 
 # Environment variables
 .env
 .envrc
+cli/.env
+mobile/.env
 
 # TypeScript
 *.tsbuildinfo
@@ -27,6 +28,9 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# Claude Code
+.claude/
 
 # Flutter/Dart related (mobile_app/ has its own .gitignore but this ensures global coverage)
 **/pubspec.lock

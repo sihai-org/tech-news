@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import { RadarConfig } from '../types/index.js';
 
-export async function loadConfig(configPath: string = './radar-config.json'): Promise<RadarConfig> {
+export async function loadConfig(configPath: string = '../shared/config/radar-config.json'): Promise<RadarConfig> {
   try {
     const content = await fs.readFile(configPath, 'utf8');
     const config = JSON.parse(content) as RadarConfig;
