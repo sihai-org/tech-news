@@ -22,7 +22,7 @@ class AnalysisService {
   /// Check if Supabase is initialized and return failure result if not
   ServiceResult<T>? _checkInitialization<T>() {
     if (!_supabaseClient.isInitialized) {
-      return ServiceResult.failure(const ApiError(
+      return const ServiceResult.failure(ApiError(
         message: 'Supabase is not initialized. Please check your app configuration and ensure SUPABASE_URL and SUPABASE_ANON_KEY are set correctly.',
         code: 500,
         details: 'Check that SUPABASE_URL and SUPABASE_ANON_KEY environment variables are properly set.',
