@@ -254,6 +254,77 @@ export async function getUnanalyzedRepositories(limit?: number): Promise<Databas
   return data || [];
 }
 
+export async function getRepositoryWithCollection(repositoryId: string): Promise<{
+  repository: Database['public']['Tables']['github_radar_repositories']['Row'];
+  collection: Database['public']['Tables']['github_radar_collections']['Row'];
+} | null> {
+  const client = initSupabase();
+  
+  const { data, error } = await client
+    .from('github_radar_repositories')
+    .select(`
+      *,
+      github_radar_collections (*)
+    `)
+    .eq('id', repositoryId)
+    .single();
+  
+  if (error) {
+    throw new Error(`Failed to fetch repository with collection: ${error.message}`);
+  }
+  
+  if (!data || !data.github_radar_collections) {
+    return null;
+  }
+  
+  return {
+    repository: data as Database['public']['Tables']['github_radar_repositories']['Row'],
+    collection: data.github_radar_collections as Database['public']['Tables']['github_radar_collections']['Row']
+  };
+}
+
+export async function getUnanalyzedRepositoriesWithCollection(limit?: number): Promise<Array<{
+  repository: Database['public']['Tables']['github_radar_repositories']['Row'];
+  collection: Database['public']['Tables']['github_radar_collections']['Row'];
+}>> {
+  const client = initSupabase();
+  
+  let query = client
+    .from('github_radar_repositories')
+    .select(`
+      *,
+      github_radar_collections (*)
+    `)
+    .not('html_url', 'in', `(
+      SELECT DISTINCT repository_url 
+      FROM github_radar_analyses 
+      WHERE repository_url IS NOT NULL
+    )`)
+    .order('discovered_at', { ascending: false });
+  
+  if (limit) {
+    query = query.limit(limit);
+  }
+  
+  const { data, error } = await query;
+  
+  if (error) {
+    throw new Error(`Failed to fetch unanalyzed repositories with collection: ${error.message}`);
+  }
+  
+  const results = [];
+  for (const item of data || []) {
+    if (item.github_radar_collections) {
+      results.push({
+        repository: item as Database['public']['Tables']['github_radar_repositories']['Row'],
+        collection: item.github_radar_collections as Database['public']['Tables']['github_radar_collections']['Row']
+      });
+    }
+  }
+  
+  return results;
+}
+
 export async function getRepositoryStatistics(): Promise<{
   totalRepositories: number;
   analyzedRepositories: number;

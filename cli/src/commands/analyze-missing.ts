@@ -1,5 +1,5 @@
 import { analyzeRepo } from '../core/analyzer.js';
-import { saveAnalysisToSupabase, getUnanalyzedRepositories, getRepositoryStatistics } from '../services/supabase.js';
+import { saveAnalysisToSupabase, getUnanalyzedRepositoriesWithCollection, getRepositoryStatistics } from '../services/supabase.js';
 import { extractTitleAndContent } from '../utils/title-extractor.js';
 import { GitHubRepo } from '../types/index.js';
 
@@ -50,21 +50,23 @@ export async function analyzeMissingCommand(options: {
       return;
     }
 
-    // Get unanalyzed repositories
-    console.log(`\n🔎 Fetching unanalyzed repositories${limit ? ` (limit: ${limit})` : ''}...`);
-    const unanalyzedRepos = await getUnanalyzedRepositories(limit);
+    // Get unanalyzed repositories with their collection info
+    console.log(`\n🔎 Fetching unanalyzed repositories with collection info${limit ? ` (limit: ${limit})` : ''}...`);
+    const unanalyzedRepoData = await getUnanalyzedRepositoriesWithCollection(limit);
     
-    if (unanalyzedRepos.length === 0) {
+    if (unanalyzedRepoData.length === 0) {
       console.log('🎉 No unanalyzed repositories found!');
       return;
     }
 
-    console.log(`📋 Found ${unanalyzedRepos.length} repositories to analyze\n`);
+    console.log(`📋 Found ${unanalyzedRepoData.length} repositories to analyze\n`);
 
     if (options.dryRun) {
       console.log('🏃 DRY RUN - Would analyze the following repositories:');
-      unanalyzedRepos.forEach((repo, index) => {
-        console.log(`  ${index + 1}. ${repo.full_name} (⭐ ${repo.stars} stars)`);
+      unanalyzedRepoData.forEach((repoData, index) => {
+        const repo = repoData.repository;
+        const collection = repoData.collection;
+        console.log(`  ${index + 1}. ${repo.full_name} (⭐ ${repo.stars} stars) [${collection.type}/${collection.language}]`);
       });
       console.log(`\nRun without --dry-run to perform actual analysis.`);
       return;
@@ -74,12 +76,13 @@ export async function analyzeMissingCommand(options: {
     let errorCount = 0;
 
     // Process each repository
-    for (let i = 0; i < unanalyzedRepos.length; i++) {
-      const dbRepo = unanalyzedRepos[i];
+    for (let i = 0; i < unanalyzedRepoData.length; i++) {
+      const { repository: dbRepo, collection } = unanalyzedRepoData[i];
       const repo = convertToGitHubRepo(dbRepo);
       
-      console.log(`[${i + 1}/${unanalyzedRepos.length}] 🔍 Analyzing ${repo.full_name}...`);
+      console.log(`[${i + 1}/${unanalyzedRepoData.length}] 🔍 Analyzing ${repo.full_name}...`);
       console.log(`  📊 ${repo.stargazers_count} stars | 🗂️ ${repo.language || 'Unknown'} | 📅 ${new Date(repo.created_at).toDateString()}`);
+      console.log(`  📂 Collection: ${collection.name} (${collection.type})`);
 
       try {
         // Analyze the repository
@@ -89,12 +92,14 @@ export async function analyzeMissingCommand(options: {
         const { title, content: cleanedAnalysis } = extractTitleAndContent(analysis.analysis);
         console.log(`  📝 Extracted title: ${title}`);
 
-        // Save analysis to database
+        // Save analysis to database with collection information
         await saveAnalysisToSupabase({
           repo: repo,
           title: title,
           analysis: cleanedAnalysis,
           markdown: analysis.markdown,
+          collectionName: collection.name,
+          collectionType: collection.type,
         });
 
         console.log(`  ✅ Analysis completed and saved\n`);
@@ -106,7 +111,7 @@ export async function analyzeMissingCommand(options: {
       }
 
       // Rate limiting between analyses
-      if (i < unanalyzedRepos.length - 1 && delay > 0) {
+      if (i < unanalyzedRepoData.length - 1 && delay > 0) {
         console.log(`  ⏳ Waiting ${delay}ms before next analysis...\n`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
@@ -116,7 +121,7 @@ export async function analyzeMissingCommand(options: {
     console.log('🎯 Analysis Summary:');
     console.log(`  ✅ Successfully analyzed: ${successCount}`);
     console.log(`  ❌ Failed: ${errorCount}`);
-    console.log(`  📊 Total processed: ${unanalyzedRepos.length}`);
+    console.log(`  📊 Total processed: ${unanalyzedRepoData.length}`);
     
     if (successCount > 0) {
       console.log('\n🎉 Missing repository analysis completed!');
