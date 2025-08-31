@@ -29,8 +29,8 @@ export async function analyzeMissingCommand(options: {
       process.exit(1);
     }
 
-    if (!process.env.GITHUB_TOKEN) {
-      console.error('WARNING: GITHUB_TOKEN not set. You may hit low rate limits.');
+    if (!process.env.API_TOKEN) {
+      console.error('WARNING: API_TOKEN not set. You may hit low rate limits.');
     }
 
     const limit = options.limit ? parseInt(options.limit, 10) : undefined;

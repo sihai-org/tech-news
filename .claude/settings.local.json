@@ -22,7 +22,10 @@
       "Bash(git restore:*)",
       "Bash(npm run analyze-missing:stats:*)",
       "Bash(npm run analyze-missing:preview:*)",
-      "Bash(npm run analyze-missing:small:*)"
+      "Bash(npm run analyze-missing:small:*)",
+      "Bash(npm install)",
+      "Read(/Users/zhefeng/development/Repositories/**)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []
