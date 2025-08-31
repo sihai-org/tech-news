@@ -142,15 +142,26 @@ export async function saveResultsToSupabase(results: RadarResult[]): Promise<voi
       discovered_at: new Date().toISOString(), // Always update discovery time
     }));
     
-    const { error: repoError } = await client
-      .from('github_radar_repositories')
-      .upsert(repoUpserts, {
-        onConflict: 'html_url',
-        ignoreDuplicates: false
-      });
-    
-    if (repoError) {
-      throw new Error(`Failed to upsert repositories: ${repoError.message}`);
+    // Process repositories in batches to avoid large payload issues
+    const BATCH_SIZE = 50;
+    for (let i = 0; i < repoUpserts.length; i += BATCH_SIZE) {
+      const batch = repoUpserts.slice(i, i + BATCH_SIZE);
+      
+      const { error: repoError } = await client
+        .from('github_radar_repositories')
+        .upsert(batch, {
+          onConflict: 'html_url',
+          ignoreDuplicates: false
+        });
+      
+      if (repoError) {
+        throw new Error(`Failed to upsert repositories: ${repoError.message}`);
+      }
+      
+      // Small delay between batches to avoid overwhelming the database
+      if (i + BATCH_SIZE < repoUpserts.length) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
     }
   }
 }
