@@ -6,7 +6,15 @@
       "Bash(flutter:*)",
       "Read(/Users/zhefeng/development/Repositories/**)",
       "Bash(chmod:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(./gradlew:*)",
+      "Bash(java:*)",
+      "Bash(export JAVA_HOME=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\")",
+      "Bash(curl:*)",
+      "Bash(brew install:*)",
+      "Bash(export:*)",
+      "Read(/Applications/Android Studio.app/Contents/jbr/**)",
+      "Read(/Applications/Android Studio.app/Contents/jbr/Contents/**)"
     ],
     "deny": [],
     "ask": []
