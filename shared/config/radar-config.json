@@ -1,6 +1,13 @@
 {
   "collections": [
     {
+      "name": "trending_python",
+      "type": "trending",
+      "language": "Python",
+      "days": 7,
+      "minStars": 10
+    },
+    {
       "name": "trending_typescript",
       "type": "trending",
       "language": "TypeScript",
@@ -8,23 +15,200 @@
       "minStars": 5
     },
     {
-      "name": "trending_python",
-      "type": "trending", 
-      "language": "Python",
+      "name": "trending_go",
+      "type": "trending",
+      "language": "Go",
       "days": 7,
       "minStars": 10
     },
     {
-      "name": "fastest_growing_all",
+      "name": "trending_java",
+      "type": "trending",
+      "language": "Java",
+      "days": 7,
+      "minStars": 15
+    },
+    {
+      "name": "trending_rust",
+      "type": "trending",
+      "language": "Rust",
+      "days": 7,
+      "minStars": 10
+    },
+    {
+      "name": "trending_cpp",
+      "type": "trending",
+      "language": "C++",
+      "days": 7,
+      "minStars": 15
+    },
+    {
+      "name": "trending_javascript",
+      "type": "trending",
+      "language": "JavaScript",
+      "days": 7,
+      "minStars": 5
+    },
+    {
+      "name": "trending_csharp",
+      "type": "trending",
+      "language": "C#",
+      "days": 7,
+      "minStars": 10
+    },
+    {
+      "name": "trending_c",
+      "type": "trending",
+      "language": "C",
+      "days": 7,
+      "minStars": 15
+    },
+    {
+      "name": "trending_php",
+      "type": "trending",
+      "language": "PHP",
+      "days": 7,
+      "minStars": 5
+    },
+    {
+      "name": "fastest_growing_python",
       "type": "fastest_growing",
+      "language": "Python",
       "days": 30,
       "minStars": 50
+    },
+    {
+      "name": "fastest_growing_typescript",
+      "type": "fastest_growing",
+      "language": "TypeScript",
+      "days": 30,
+      "minStars": 25
+    },
+    {
+      "name": "fastest_growing_go",
+      "type": "fastest_growing",
+      "language": "Go",
+      "days": 30,
+      "minStars": 50
+    },
+    {
+      "name": "fastest_growing_java",
+      "type": "fastest_growing",
+      "language": "Java",
+      "days": 30,
+      "minStars": 75
+    },
+    {
+      "name": "fastest_growing_rust",
+      "type": "fastest_growing",
+      "language": "Rust",
+      "days": 30,
+      "minStars": 50
+    },
+    {
+      "name": "fastest_growing_cpp",
+      "type": "fastest_growing",
+      "language": "C++",
+      "days": 30,
+      "minStars": 75
+    },
+    {
+      "name": "fastest_growing_javascript",
+      "type": "fastest_growing",
+      "language": "JavaScript",
+      "days": 30,
+      "minStars": 25
+    },
+    {
+      "name": "fastest_growing_csharp",
+      "type": "fastest_growing",
+      "language": "C#",
+      "days": 30,
+      "minStars": 50
+    },
+    {
+      "name": "fastest_growing_c",
+      "type": "fastest_growing",
+      "language": "C",
+      "days": 30,
+      "minStars": 75
+    },
+    {
+      "name": "fastest_growing_php",
+      "type": "fastest_growing",
+      "language": "PHP",
+      "days": 30,
+      "minStars": 25
+    },
+    {
+      "name": "newly_published_python",
+      "type": "newly_published",
+      "language": "Python",
+      "days": 3,
+      "minStars": 1
+    },
+    {
+      "name": "newly_published_typescript",
+      "type": "newly_published",
+      "language": "TypeScript",
+      "days": 3,
+      "minStars": 1
+    },
+    {
+      "name": "newly_published_go",
+      "type": "newly_published",
+      "language": "Go",
+      "days": 3,
+      "minStars": 1
+    },
+    {
+      "name": "newly_published_java",
+      "type": "newly_published",
+      "language": "Java",
+      "days": 3,
+      "minStars": 1
     },
     {
       "name": "newly_published_rust",
       "type": "newly_published",
       "language": "Rust",
-      "days": 3
+      "days": 3,
+      "minStars": 1
+    },
+    {
+      "name": "newly_published_cpp",
+      "type": "newly_published",
+      "language": "C++",
+      "days": 3,
+      "minStars": 1
+    },
+    {
+      "name": "newly_published_javascript",
+      "type": "newly_published",
+      "language": "JavaScript",
+      "days": 3,
+      "minStars": 1
+    },
+    {
+      "name": "newly_published_csharp",
+      "type": "newly_published",
+      "language": "C#",
+      "days": 3,
+      "minStars": 1
+    },
+    {
+      "name": "newly_published_c",
+      "type": "newly_published",
+      "language": "C",
+      "days": 3,
+      "minStars": 1
+    },
+    {
+      "name": "newly_published_php",
+      "type": "newly_published",
+      "language": "PHP",
+      "days": 3,
+      "minStars": 1
     }
   ],
   "output": {
