@@ -24,6 +24,7 @@ jobs:
     name: Analyze Missing Repositories
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    environment: cli-env
     
     steps:
     - name: Checkout repository
