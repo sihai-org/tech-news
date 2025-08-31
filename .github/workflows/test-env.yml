@@ -1,0 +1,70 @@
+name: Test Environment Configuration
+
+# 仅用于测试 GitHub Secrets 配置，可以手动触发
+on:
+  workflow_dispatch:
+
+jobs:
+  test-secrets:
+    name: Test Secrets Configuration
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Test secrets availability
+      run: |
+        echo "Testing GitHub Secrets configuration..."
+        
+        # 检查 secrets 是否配置
+        if [[ -z "${{ secrets.SUPABASE_URL }}" ]]; then
+          echo "❌ SUPABASE_URL secret is not configured"
+          exit 1
+        else
+          echo "✅ SUPABASE_URL secret is configured"
+          echo "SUPABASE_URL starts with: $(echo '${{ secrets.SUPABASE_URL }}' | cut -c1-20)..."
+        fi
+        
+        if [[ -z "${{ secrets.SUPABASE_ANON_KEY }}" ]]; then
+          echo "❌ SUPABASE_ANON_KEY secret is not configured"
+          exit 1
+        else
+          echo "✅ SUPABASE_ANON_KEY secret is configured"
+          echo "SUPABASE_ANON_KEY starts with: $(echo '${{ secrets.SUPABASE_ANON_KEY }}' | cut -c1-20)..."
+        fi
+        
+    - name: Create and verify .env file
+      working-directory: mobile
+      run: |
+        echo "Creating .env file from secrets..."
+        echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env
+        echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
+        echo "APP_NAME=GitHub Radar News" >> .env
+        echo "APP_VERSION=1.3.0" >> .env
+        
+        echo ""
+        echo ".env file created successfully!"
+        echo "File size: $(wc -c < .env) bytes"
+        echo "Line count: $(wc -l < .env) lines"
+        
+        # 验证内容（但不显示敏感信息）
+        echo ""
+        echo "Verifying .env file contents:"
+        if grep -q "SUPABASE_URL=" .env; then
+          echo "✅ SUPABASE_URL is present"
+        else
+          echo "❌ SUPABASE_URL is missing"
+        fi
+        
+        if grep -q "SUPABASE_ANON_KEY=" .env; then
+          echo "✅ SUPABASE_ANON_KEY is present"
+        else
+          echo "❌ SUPABASE_ANON_KEY is missing"
+        fi
+        
+        if grep -q "APP_NAME=" .env; then
+          echo "✅ APP_NAME is present"
+        else
+          echo "❌ APP_NAME is missing"
+        fi
