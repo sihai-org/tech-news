@@ -1,9 +1,9 @@
-name: Analyze Missing Repositories
+name: Analyze Missing Repositories (Hourly)
 
 on:
-  # Run every 6 hours
+  # Run every hour
   schedule:
-    - cron: '0 */6 * * *'
+    - cron: '0 * * * *'
   
   # Allow manual trigger
   workflow_dispatch:
@@ -11,18 +11,19 @@ on:
       limit:
         description: 'Maximum number of repositories to analyze'
         required: false
-        default: '10'
+        default: '20'
         type: string
       delay:
         description: 'Delay between analyses (ms)'
         required: false
-        default: '5000'
+        default: '3000'
         type: string
 
 jobs:
   analyze-missing:
     name: Analyze Missing Repositories
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     
     steps:
     - name: Checkout repository
@@ -51,12 +52,16 @@ jobs:
         SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
       run: |
-        # Use inputs if manually triggered, otherwise use defaults
-        LIMIT="${{ github.event.inputs.limit || '10' }}"
-        DELAY="${{ github.event.inputs.delay || '5000' }}"
+        # Use inputs if manually triggered, otherwise use medium defaults (20 repos, 3s delay)
+        LIMIT="${{ github.event.inputs.limit || '20' }}"
+        DELAY="${{ github.event.inputs.delay || '3000' }}"
         
-        echo "🔍 Starting analyze-missing with limit=${LIMIT} delay=${DELAY}"
+        echo "🔍 Starting analyze-missing:medium equivalent with limit=${LIMIT} delay=${DELAY}"
+        echo "⏰ Started at: $(date)"
+        
         node dist/index.js analyze-missing --limit "${LIMIT}" --delay "${DELAY}"
+        
+        echo "✅ Analysis completed at: $(date)"
         
     - name: Upload analysis logs
       if: always()

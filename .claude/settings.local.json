@@ -21,7 +21,8 @@
       "Bash(node:*)",
       "Bash(git restore:*)",
       "Bash(npm run analyze-missing:stats:*)",
-      "Bash(npm run analyze-missing:preview:*)"
+      "Bash(npm run analyze-missing:preview:*)",
+      "Bash(npm run analyze-missing:small:*)"
     ],
     "deny": [],
     "ask": []
