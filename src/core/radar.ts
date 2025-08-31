@@ -1,4 +1,4 @@
-import { GitHubRepo, SlimRepo, FastGrowingRepo } from './types.js';
+import { GitHubRepo, SlimRepo, FastGrowingRepo } from '../types/index.js';
 import { searchRepos } from './github-api.js';
 
 function parseISO8601(dateString: string): Date {

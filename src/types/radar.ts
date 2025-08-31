@@ -32,12 +32,34 @@ export interface SearchResponse {
   items: GitHubRepo[];
 }
 
-export interface SearchOptions {
+export interface CollectionConfig {
+  name: string;
+  type: 'trending' | 'fastest_growing' | 'newly_published';
   language?: string;
-  trendingDays: number;
-  growthDays: number;
-  newDays: number;
-  minStars: number;
-  perPage: number;
-  maxPages: number;
+  days: number;
+  minStars?: number;
+}
+
+export interface RadarConfig {
+  collections: CollectionConfig[];
+  output: {
+    type: 'file' | 'supabase' | 'both';
+    directory: string;
+    format: 'json' | 'csv';
+    includeTimestamp: boolean;
+    fallbackToFile?: boolean;
+  };
+  api: {
+    perPage: number;
+    maxPages: number;
+    rateLimitDelay: number;
+  };
+}
+
+export interface RadarResult {
+  timestamp: string;
+  collection: string;
+  type: string;
+  language?: string;
+  repositories: (SlimRepo | FastGrowingRepo)[];
 }

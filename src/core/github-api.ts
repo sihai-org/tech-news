@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-import { GitHubRepo, SearchResponse } from './types.js';
+import { GitHubRepo, SearchResponse } from '../types/index.js';
 
 const GITHUB_API = 'https://api.github.com';
 const TOKEN = process.env.GITHUB_TOKEN;

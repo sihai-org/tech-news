@@ -1,0 +1,42 @@
+{
+  "collections": [
+    {
+      "name": "trending_typescript",
+      "type": "trending",
+      "language": "TypeScript",
+      "days": 7,
+      "minStars": 5
+    },
+    {
+      "name": "trending_python",
+      "type": "trending", 
+      "language": "Python",
+      "days": 7,
+      "minStars": 10
+    },
+    {
+      "name": "fastest_growing_all",
+      "type": "fastest_growing",
+      "days": 30,
+      "minStars": 50
+    },
+    {
+      "name": "newly_published_rust",
+      "type": "newly_published",
+      "language": "Rust",
+      "days": 3
+    }
+  ],
+  "output": {
+    "type": "supabase",
+    "directory": "./data",
+    "format": "json",
+    "includeTimestamp": true,
+    "fallbackToFile": true
+  },
+  "api": {
+    "perPage": 50,
+    "maxPages": 2,
+    "rateLimitDelay": 200
+  }
+}
