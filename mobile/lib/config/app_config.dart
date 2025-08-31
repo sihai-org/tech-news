@@ -1,13 +1,27 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AppConfig {
-  // Supabase Configuration from .env file
-  static String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? 'YOUR_SUPABASE_URL_HERE';
-  static String get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? 'YOUR_SUPABASE_ANON_KEY_HERE';
+  // Supabase Configuration - Priority: compile-time constants > .env file > defaults
+  static String get supabaseUrl => 
+      const String.fromEnvironment('SUPABASE_URL', defaultValue: '') != '' 
+          ? const String.fromEnvironment('SUPABASE_URL')
+          : dotenv.env['SUPABASE_URL'] ?? 'YOUR_SUPABASE_URL_HERE';
+          
+  static String get supabaseAnonKey => 
+      const String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: '') != ''
+          ? const String.fromEnvironment('SUPABASE_ANON_KEY') 
+          : dotenv.env['SUPABASE_ANON_KEY'] ?? 'YOUR_SUPABASE_ANON_KEY_HERE';
   
-  // App Configuration
-  static String get appName => dotenv.env['APP_NAME'] ?? 'GitHub Radar News';
-  static String get appVersion => dotenv.env['APP_VERSION'] ?? '1.2.1';
+  // App Configuration - Priority: compile-time constants > .env file > defaults
+  static String get appName => 
+      const String.fromEnvironment('APP_NAME', defaultValue: '') != ''
+          ? const String.fromEnvironment('APP_NAME')
+          : dotenv.env['APP_NAME'] ?? 'GitHub Radar News';
+          
+  static String get appVersion => 
+      const String.fromEnvironment('APP_VERSION', defaultValue: '') != ''
+          ? const String.fromEnvironment('APP_VERSION')
+          : dotenv.env['APP_VERSION'] ?? '1.2.1';
   
   // Cache Configuration
   static const int cacheMaxAge = 3600; // 1 hour in seconds

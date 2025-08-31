@@ -19,7 +19,9 @@
       "Bash(git push:*)",
       "Bash(npm run daily:*)",
       "Bash(node:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(npm run analyze-missing:stats:*)",
+      "Bash(npm run analyze-missing:preview:*)"
     ],
     "deny": [],
     "ask": []
