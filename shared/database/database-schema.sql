@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS github_radar_repositories (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   collection_id UUID NOT NULL REFERENCES github_radar_collections(id) ON DELETE CASCADE,
   full_name TEXT NOT NULL,
-  html_url TEXT NOT NULL,
+  html_url TEXT NOT NULL UNIQUE, -- Add unique constraint for upsert
   description TEXT,
   language TEXT,
   stars INTEGER NOT NULL DEFAULT 0,

@@ -126,8 +126,8 @@ export async function saveResultsToSupabase(results: RadarResult[]): Promise<voi
       throw new Error(`Failed to insert collection: ${collectionError.message}`);
     }
     
-    // Insert repository records
-    const repoInserts = result.repositories.map((repo) => ({
+    // Upsert repository records (insert or update if html_url exists)
+    const repoUpserts = result.repositories.map((repo) => ({
       collection_id: collection.id,
       full_name: repo.full_name,
       html_url: repo.html_url,
@@ -139,14 +139,18 @@ export async function saveResultsToSupabase(results: RadarResult[]): Promise<voi
       stars_per_day: 'stars_per_day' in repo ? repo.stars_per_day : null,
       created_at: repo.created_at,
       pushed_at: repo.pushed_at,
+      discovered_at: new Date().toISOString(), // Always update discovery time
     }));
     
     const { error: repoError } = await client
       .from('github_radar_repositories')
-      .insert(repoInserts);
+      .upsert(repoUpserts, {
+        onConflict: 'html_url',
+        ignoreDuplicates: false
+      });
     
     if (repoError) {
-      throw new Error(`Failed to insert repositories: ${repoError.message}`);
+      throw new Error(`Failed to upsert repositories: ${repoError.message}`);
     }
   }
 }
