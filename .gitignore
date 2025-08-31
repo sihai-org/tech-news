@@ -27,3 +27,37 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# Flutter/Dart related (mobile_app/ has its own .gitignore but this ensures global coverage)
+**/pubspec.lock
+**/.dart_tool/
+**/.pub-cache/
+**/.pub/
+**/build/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+
+# Flutter build artifacts
+**/ios/Flutter/.last_build_id
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+
+# Generated files
+**/*.g.dart
+**/*.freezed.dart
+**/*.chopper.dart
+
+# Flutter/iOS specific
+**/ios/Pods/
+**/ios/Runner.xcworkspace/xcuserdata/
+**/ios/Runner.xcodeproj/xcuserdata/
+**/ios/Flutter/flutter_export_environment.sh
+
+# Flutter/Android specific
+**/android/.gradle/
+**/android/captures/
+**/android/gradlew
+**/android/gradlew.bat
+**/android/local.properties
+**/android/app/src/main/java/io/flutter/plugins/
