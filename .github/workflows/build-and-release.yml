@@ -47,38 +47,33 @@ jobs:
         flutter pub get
         flutter packages pub run build_runner build --delete-conflicting-outputs
         
-    - name: Create .env file
+    - name: Embed configuration in app
       working-directory: mobile
       run: |
+        # Replace build-time placeholders with actual values in app_config.dart
+        sed -i "s|BUILD_TIME_SUPABASE_URL|${{ secrets.SUPABASE_URL }}|g" lib/config/app_config.dart
+        sed -i "s|BUILD_TIME_SUPABASE_ANON_KEY|${{ secrets.SUPABASE_ANON_KEY }}|g" lib/config/app_config.dart
+        
+        # Also create .env file as backup
         echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env
         echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
         echo "APP_NAME=GitHub Radar News" >> .env
         echo "APP_VERSION=1.0.2" >> .env
         
-    - name: Verify .env file (debug)
+    - name: Verify configuration embedding (debug)
       working-directory: mobile
       run: |
-        echo "=== .env file contents ==="
-        cat .env
-        echo "=========================="
+        echo "=== app_config.dart (first 30 lines) ==="
+        head -30 lib/config/app_config.dart
+        echo "========================================="
         
     - name: Build APK
       working-directory: mobile
-      run: |
-        flutter build apk --release \
-          --dart-define=SUPABASE_URL="${{ secrets.SUPABASE_URL }}" \
-          --dart-define=SUPABASE_ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}" \
-          --dart-define=APP_NAME="GitHub Radar News" \
-          --dart-define=APP_VERSION="1.0.2"
+      run: flutter build apk --release
       
     - name: Build App Bundle
       working-directory: mobile
-      run: |
-        flutter build appbundle --release \
-          --dart-define=SUPABASE_URL="${{ secrets.SUPABASE_URL }}" \
-          --dart-define=SUPABASE_ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}" \
-          --dart-define=APP_NAME="GitHub Radar News" \
-          --dart-define=APP_VERSION="1.0.2"
+      run: flutter build appbundle --release
       
     - name: Upload APK artifact
       uses: actions/upload-artifact@v4
@@ -113,29 +108,29 @@ jobs:
         flutter pub get
         flutter packages pub run build_runner build --delete-conflicting-outputs
         
-    - name: Create .env file
+    - name: Embed configuration in app
       working-directory: mobile
       run: |
+        # Replace build-time placeholders with actual values in app_config.dart
+        sed -i "" "s|BUILD_TIME_SUPABASE_URL|${{ secrets.SUPABASE_URL }}|g" lib/config/app_config.dart
+        sed -i "" "s|BUILD_TIME_SUPABASE_ANON_KEY|${{ secrets.SUPABASE_ANON_KEY }}|g" lib/config/app_config.dart
+        
+        # Also create .env file as backup
         echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env
         echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
         echo "APP_NAME=GitHub Radar News" >> .env
         echo "APP_VERSION=1.0.2" >> .env
         
-    - name: Verify .env file (debug)
+    - name: Verify configuration embedding (debug)
       working-directory: mobile
       run: |
-        echo "=== .env file contents ==="
-        cat .env
-        echo "=========================="
+        echo "=== app_config.dart (first 30 lines) ==="
+        head -30 lib/config/app_config.dart
+        echo "========================================="
         
     - name: Build iOS (no codesign)
       working-directory: mobile
-      run: |
-        flutter build ios --release --no-codesign \
-          --dart-define=SUPABASE_URL="${{ secrets.SUPABASE_URL }}" \
-          --dart-define=SUPABASE_ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}" \
-          --dart-define=APP_NAME="GitHub Radar News" \
-          --dart-define=APP_VERSION="1.0.2"
+      run: flutter build ios --release --no-codesign
       
     - name: Create iOS IPA
       working-directory: mobile

@@ -1,16 +1,30 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AppConfig {
-  // Supabase Configuration - Priority: compile-time constants > .env file > defaults
-  static String get supabaseUrl => 
-      const String.fromEnvironment('SUPABASE_URL', defaultValue: '') != '' 
-          ? const String.fromEnvironment('SUPABASE_URL')
-          : dotenv.env['SUPABASE_URL'] ?? 'YOUR_SUPABASE_URL_HERE';
+  // Build-time configuration (will be replaced by CI/CD)
+  static const String _buildTimeSupabaseUrl = 'BUILD_TIME_SUPABASE_URL';
+  static const String _buildTimeSupabaseAnonKey = 'BUILD_TIME_SUPABASE_ANON_KEY';
+
+  // Supabase Configuration - Priority: build-time constants > .env file > defaults
+  static String get supabaseUrl {
+    // Check if build-time configuration was injected
+    if (_buildTimeSupabaseUrl != 'BUILD_TIME_SUPABASE_URL' && _buildTimeSupabaseUrl.isNotEmpty) {
+      return _buildTimeSupabaseUrl;
+    }
+    
+    // Fall back to .env file
+    return dotenv.env['SUPABASE_URL'] ?? 'YOUR_SUPABASE_URL_HERE';
+  }
           
-  static String get supabaseAnonKey => 
-      const String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: '') != ''
-          ? const String.fromEnvironment('SUPABASE_ANON_KEY') 
-          : dotenv.env['SUPABASE_ANON_KEY'] ?? 'YOUR_SUPABASE_ANON_KEY_HERE';
+  static String get supabaseAnonKey {
+    // Check if build-time configuration was injected
+    if (_buildTimeSupabaseAnonKey != 'BUILD_TIME_SUPABASE_ANON_KEY' && _buildTimeSupabaseAnonKey.isNotEmpty) {
+      return _buildTimeSupabaseAnonKey;
+    }
+    
+    // Fall back to .env file
+    return dotenv.env['SUPABASE_ANON_KEY'] ?? 'YOUR_SUPABASE_ANON_KEY_HERE';
+  }
   
   // App Configuration - Priority: compile-time constants > .env file > defaults
   static String get appName => 
