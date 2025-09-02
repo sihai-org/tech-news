@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required for network access to Supabase API -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    
     <application
         android:label="github_radar_news"
         android:name="${applicationName}"

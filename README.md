@@ -450,3 +450,4 @@ npm run typecheck
 - **v1.0.5**: 重构为 Monorepo 架构，分离 CLI 工具和移动应用，提升开发效率和项目维护性，新增 GitHub Actions 自动构建和发布
 - **v1.0.6**: 配置 mobile-env 环境用于 CI/CD 构建流程
 - **v1.0.7**: 统一版本号管理，更新各模块版本至 1.0.7
+- **v1.0.8**: 修复 Android Release 版本缺少网络权限的关键问题

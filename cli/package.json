@@ -1,6 +1,6 @@
 {
   "name": "github-radar",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "GitHub Open Source Radar - Discover trending, fastest-growing, and newly published repositories",
   "main": "dist/index.js",
   "bin": {
