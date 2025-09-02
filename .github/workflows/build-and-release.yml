@@ -23,6 +23,7 @@ jobs:
   build-android:
     name: Build Android APK
     runs-on: ubuntu-latest
+    environment: mobile-env
     
     steps:
     - name: Checkout repository
@@ -107,6 +108,7 @@ jobs:
   build-ios:
     name: Build iOS IPA
     runs-on: macos-latest
+    environment: mobile-env
     
     steps:
     - name: Checkout repository
