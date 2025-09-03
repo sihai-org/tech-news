@@ -164,23 +164,87 @@ jobs:
         head -10 .env
         echo "=================="
         
-    - name: Build iOS (no codesign)
-      working-directory: mobile
-      run: flutter build ios --release --no-codesign
-      
-    - name: Create iOS IPA
-      working-directory: mobile
+    - name: Setup iOS Code Signing
+      env:
+        DISTRIBUTION_CERT_BASE64: ${{ secrets.IOS_DISTRIBUTION_CERT_BASE64 }}
+        DISTRIBUTION_CERT_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_CERT_PASSWORD }}
+        PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+        APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       run: |
-        mkdir -p build/ios/ipa/Payload
-        cp -r build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
-        cd build/ios/ipa
-        zip -r ../../../github-radar-news-ios.ipa Payload/
+        # Run the certificate import script
+        bash scripts/import-certificate.sh
+        
+        # Get provisioning profile UUID for ExportOptions
+        echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > temp.mobileprovision
+        export PROVISIONING_PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" /dev/stdin <<< $(security cms -D -i temp.mobileprovision))
+        rm temp.mobileprovision
+        
+        # Generate ExportOptions.plist with actual values
+        bash scripts/generate-export-options.sh
+        
+        # Set up Xcode signing
+        echo "=== Setting up code signing ==="
+        echo "Team ID: $APPLE_TEAM_ID"
+        echo "Profile UUID: $PROVISIONING_PROFILE_UUID"
+        
+    - name: Build iOS (Signed Release build)
+      working-directory: mobile
+      env:
+        APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      run: |
+        # Clean build directory
+        flutter clean
+        flutter pub get
+        
+        # Build with code signing
+        flutter build ios --release \
+          --export-options-plist=../ios/ExportOptions.plist \
+          --build-name=1.0.8 \
+          --build-number=1
+        
+        # Verify the signed build
+        echo "=== Verifying signed build ==="
+        codesign -dvv build/ios/iphoneos/Runner.app 2>&1 | grep -E "Identifier|TeamIdentifier|Authority"
+        echo "================================"
+      
+    - name: Create iOS IPA (Signed Distribution package)
+      working-directory: mobile
+      env:
+        APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      run: |
+        # Export signed IPA using xcodebuild
+        cd ios
+        
+        # Archive the app
+        xcodebuild -workspace Runner.xcworkspace \
+          -scheme Runner \
+          -configuration Release \
+          -derivedDataPath ../build/ios/derived \
+          -archivePath ../build/ios/Runner.xcarchive \
+          archive \
+          DEVELOPMENT_TEAM=$APPLE_TEAM_ID \
+          CODE_SIGNING_REQUIRED=YES
+        
+        # Export IPA from archive
+        xcodebuild -exportArchive \
+          -archivePath ../build/ios/Runner.xcarchive \
+          -exportPath ../build/ios/ipa \
+          -exportOptionsPlist ExportOptions.plist
+        
+        # Move and rename IPA
+        mv ../build/ios/ipa/*.ipa ../../github-radar-news-ios-signed.ipa
+        
+        # Verify IPA creation and signing
+        echo "=== Signed IPA Package Info ==="
+        ls -lh ../../github-radar-news-ios-signed.ipa
+        unzip -l ../../github-radar-news-ios-signed.ipa | head -20
+        echo "========================"
         
     - name: Upload IPA artifact
       uses: actions/upload-artifact@v4
       with:
-        name: ios-ipa
-        path: mobile/github-radar-news-ios.ipa
+        name: ios-ipa-signed
+        path: mobile/github-radar-news-ios-signed.ipa
 
   create-release:
     name: Create Release
@@ -207,7 +271,7 @@ jobs:
     - name: Download iOS IPA
       uses: actions/download-artifact@v4
       with:
-        name: ios-ipa
+        name: ios-ipa-signed
         path: ./artifacts/
         
     - name: Get version from tag or generate
@@ -226,7 +290,7 @@ jobs:
         cd artifacts
         mv app-release.apk "github-radar-news-${{ steps.version.outputs.version }}-android.apk"
         mv app-release.aab "github-radar-news-${{ steps.version.outputs.version }}-android.aab"
-        mv github-radar-news-ios.ipa "github-radar-news-${{ steps.version.outputs.version }}-ios.ipa"
+        mv github-radar-news-ios-signed.ipa "github-radar-news-${{ steps.version.outputs.version }}-ios.ipa"
         
     - name: Generate release notes
       id: release_notes
