@@ -58,7 +58,7 @@ jobs:
           static const String supabaseUrl = '${{ secrets.SUPABASE_URL }}';
           static const String supabaseAnonKey = '${{ secrets.SUPABASE_ANON_KEY }}';
           static const String appName = 'GitHub Radar News';
-          static const String appVersion = '1.0.8';
+          static const String appVersion = '1.0.9';
           
           static bool get hasValidConfig =>
               supabaseUrl != 'PLACEHOLDER_SUPABASE_URL' &&
@@ -72,7 +72,7 @@ jobs:
         echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env
         echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
         echo "APP_NAME=GitHub Radar News" >> .env
-        echo "APP_VERSION=1.0.8" >> .env
+        echo "APP_VERSION=1.0.9" >> .env
         
     - name: Verify configuration generation (debug)
       working-directory: mobile
@@ -137,7 +137,7 @@ jobs:
           static const String supabaseUrl = '${{ secrets.SUPABASE_URL }}';
           static const String supabaseAnonKey = '${{ secrets.SUPABASE_ANON_KEY }}';
           static const String appName = 'GitHub Radar News';
-          static const String appVersion = '1.0.8';
+          static const String appVersion = '1.0.9';
           
           static bool get hasValidConfig =>
               supabaseUrl != 'PLACEHOLDER_SUPABASE_URL' &&
@@ -151,7 +151,7 @@ jobs:
         echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env
         echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
         echo "APP_NAME=GitHub Radar News" >> .env
-        echo "APP_VERSION=1.0.8" >> .env
+        echo "APP_VERSION=1.0.9" >> .env
         
     - name: Verify configuration generation (debug)
       working-directory: mobile
@@ -199,7 +199,7 @@ jobs:
         # Build with code signing
         flutter build ios --release \
           --export-options-plist=../ios/ExportOptions.plist \
-          --build-name=1.0.8 \
+          --build-name=1.0.9 \
           --build-number=1
         
         # Verify the signed build

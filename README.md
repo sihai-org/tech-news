@@ -451,3 +451,4 @@ npm run typecheck
 - **v1.0.6**: 配置 mobile-env 环境用于 CI/CD 构建流程
 - **v1.0.7**: 统一版本号管理，更新各模块版本至 1.0.7
 - **v1.0.8**: 修复 Android Release 版本缺少网络权限的关键问题
+- **v1.0.9**: iOS 签名构建配置，Bundle ID 更改为 cn.datouai.technews，支持 Distribution 证书签名
