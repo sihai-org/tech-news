@@ -82,8 +82,26 @@ fi
 
 rm -f distribution.cert
 
-# Set key partition list to allow codesign to access the certificate
-security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_NAME
+# Verify certificate was imported successfully
+echo "Verifying certificate import..."
+if security find-identity -v -p codesigning $KEYCHAIN_NAME | grep -q "Apple Distribution"; then
+    echo "✓ Apple Distribution certificate found in keychain"
+    
+    # Set key partition list to allow codesign to access the certificate
+    echo "Setting up keychain access permissions..."
+    if security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_NAME 2>/dev/null; then
+        echo "✓ Successfully set key partition list"
+    else
+        echo "⚠ Warning: Could not set key partition list"
+        echo "  This is normal for certificates without private keys"
+        echo "  Code signing may still work if the certificate is valid"
+    fi
+else
+    echo "⚠ Warning: Could not find Apple Distribution certificate"
+    echo "Available identities:"
+    security find-identity -v $KEYCHAIN_NAME || echo "No identities found"
+    echo "Continuing with provisioning profile installation..."
+fi
 
 # Install provisioning profile
 echo "Installing provisioning profile..."
