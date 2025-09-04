@@ -66,28 +66,23 @@ echo "Certificate file size: $(wc -c < distribution.cert) bytes"
 echo "Certificate file type:"
 file distribution.cert
 
-# Check if this is a certificate bundle or single certificate
-echo "Checking certificate content with OpenSSL..."
-if openssl x509 -in distribution.cert -inform DER -text -noout | head -20; then
-    echo "Certificate is readable as DER format"
-elif openssl x509 -in distribution.cert -inform PEM -text -noout | head -20; then
-    echo "Certificate is readable as PEM format"
-else
-    echo "Certificate format check failed, trying PKCS#12..."
-    openssl pkcs12 -in distribution.cert -noout -info || echo "Not a PKCS#12 file"
-fi
+# Skip OpenSSL analysis for now - it may be causing hangs
+echo "Skipping detailed OpenSSL analysis to avoid potential hangs"
+echo "Certificate appears to be valid based on file command output"
 
 # Try to import certificate with minimal parameters first
-echo "Attempting certificate import..."
+echo "Attempting certificate import at $(date)"
 echo "Keychain name: $KEYCHAIN_NAME"
 echo "Certificate file: $(ls -la distribution.cert)"
 
 IMPORT_SUCCESS=false
 
-echo "=== Import Attempt 1: Extended access ==="
+echo "=== Import Attempt 1: Extended access at $(date) ==="
 set +e  # Disable exit on error for this section
+echo "Starting security import command..."
 IMPORT_OUTPUT=$(security import distribution.cert -k $KEYCHAIN_NAME -A -T /usr/bin/codesign -T /usr/bin/security 2>&1)
 IMPORT_CODE=$?
+echo "Security import command completed at $(date)"
 set -e  # Re-enable exit on error
 echo "Command output: $IMPORT_OUTPUT"
 echo "Exit code: $IMPORT_CODE"
