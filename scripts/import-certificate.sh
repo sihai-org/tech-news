@@ -44,14 +44,31 @@ echo "$DISTRIBUTION_CERT_BASE64" | base64 --decode > distribution.cert
 
 # Import certificate using simplified approach
 echo "Importing certificate..."
+echo "Certificate file size: $(wc -c < distribution.cert) bytes"
+echo "Certificate file type:"
+file distribution.cert
+
+# Check if this is a certificate bundle or single certificate
+echo "Checking certificate content with OpenSSL..."
+if openssl x509 -in distribution.cert -inform DER -text -noout | head -20; then
+    echo "Certificate is readable as DER format"
+elif openssl x509 -in distribution.cert -inform PEM -text -noout | head -20; then
+    echo "Certificate is readable as PEM format"
+else
+    echo "Certificate format check failed, trying PKCS#12..."
+    openssl pkcs12 -in distribution.cert -noout -info || echo "Not a PKCS#12 file"
+fi
 
 # Try to import certificate with minimal parameters first
-if security import distribution.cert -k $KEYCHAIN_NAME -A; then
-    echo "Successfully imported certificate with basic import"
+echo "Attempting certificate import..."
+if security import distribution.cert -k $KEYCHAIN_NAME -A -T /usr/bin/codesign -T /usr/bin/security; then
+    echo "✓ Successfully imported certificate with extended access"
+elif security import distribution.cert -k $KEYCHAIN_NAME -A; then
+    echo "✓ Successfully imported certificate with basic import"
 elif security import distribution.cert -k $KEYCHAIN_NAME -T /usr/bin/codesign; then
-    echo "Successfully imported certificate with codesign access"
+    echo "✓ Successfully imported certificate with codesign access"
 elif security import distribution.cert -k $KEYCHAIN_NAME; then
-    echo "Successfully imported certificate with keychain-only access"
+    echo "✓ Successfully imported certificate with keychain-only access"
 else
     echo "All import attempts failed. Trying with format specification..."
     
@@ -83,8 +100,21 @@ fi
 
 rm -f distribution.cert
 
+echo "Certificate import completed, verifying result..."
+
 # Verify certificate was imported successfully
-echo "Verifying certificate import..."
+echo "Verifying certificate import in keychain: $KEYCHAIN_NAME"
+echo "Keychain path: $HOME/Library/Keychains/$KEYCHAIN_NAME-db"
+
+# List all identities in keychain (for debugging)
+echo "=== All identities in keychain ==="
+security find-identity -v $KEYCHAIN_NAME
+
+echo "=== Codesigning identities ==="
+security find-identity -v -p codesigning $KEYCHAIN_NAME
+
+echo "=== Certificate details ==="
+security dump-keychain $KEYCHAIN_NAME | grep -A 10 -B 5 "Apple Distribution"
 if security find-identity -v -p codesigning $KEYCHAIN_NAME | grep -q "Apple Distribution"; then
     echo "✓ Apple Distribution certificate found in keychain"
     
