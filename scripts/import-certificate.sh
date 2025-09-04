@@ -60,119 +60,48 @@ echo "Importing distribution certificate..."
 # Decode base64 certificate
 echo "$DISTRIBUTION_CERT_BASE64" | base64 --decode > distribution.cert
 
-# Import certificate using simplified approach
+# Import certificate - check if this is a PKCS#12 or certificate file
 echo "Importing certificate..."
 echo "Certificate file size: $(wc -c < distribution.cert) bytes"
 echo "Certificate file type:"
 file distribution.cert
 
-# Skip OpenSSL analysis for now - it may be causing hangs
-echo "Skipping detailed OpenSSL analysis to avoid potential hangs"
-echo "Certificate appears to be valid based on file command output"
-
-# Try to import certificate with minimal parameters first
-echo "Attempting certificate import at $(date)"
-echo "Keychain name: $KEYCHAIN_NAME"
-echo "Certificate file: $(ls -la distribution.cert)"
-
-IMPORT_SUCCESS=false
-
-echo "=== Import Attempt 1: Extended access at $(date) ==="
-set +e  # Disable exit on error for this section
-echo "Starting security import command..."
-IMPORT_OUTPUT=$(security import distribution.cert -k $KEYCHAIN_NAME -A -T /usr/bin/codesign -T /usr/bin/security 2>&1)
-IMPORT_CODE=$?
-echo "Security import command completed at $(date)"
-set -e  # Re-enable exit on error
-echo "Command output: $IMPORT_OUTPUT"
-echo "Exit code: $IMPORT_CODE"
-
-if [ $IMPORT_CODE -eq 0 ]; then
-    echo "✓ Successfully imported certificate with extended access"
+# Check if this is a PKCS#12 file (which contains both certificate and private key)
+if file distribution.cert | grep -q "PKCS"; then
+    echo "Detected PKCS#12 format - importing with password"
+    CERT_PASSWORD="${DISTRIBUTION_CERT_PASSWORD:-}"
+    
+    if [ -z "$CERT_PASSWORD" ]; then
+        echo "WARNING: PKCS#12 file detected but no password provided. Trying without password..."
+        security import distribution.cert -k $KEYCHAIN_NAME -A -T /usr/bin/codesign -T /usr/bin/security
+    else
+        echo "Importing PKCS#12 with password"
+        security import distribution.cert -k $KEYCHAIN_NAME -P "$CERT_PASSWORD" -A -T /usr/bin/codesign -T /usr/bin/security
+    fi
     IMPORT_SUCCESS=true
 else
-    echo "❌ Extended access import failed, trying basic import..."
+    echo "Detected certificate file (not PKCS#12)"
+    echo "WARNING: Certificate files without private key cannot be used for code signing"
+    echo "For GitHub Actions, you typically need a PKCS#12 (.p12) file that includes the private key"
     
-    echo "=== Import Attempt 2: Basic import ==="
-    set +e
-    IMPORT_OUTPUT=$(security import distribution.cert -k $KEYCHAIN_NAME -A 2>&1)
-    IMPORT_CODE=$?
-    set -e
-    echo "Command output: $IMPORT_OUTPUT"
-    echo "Exit code: $IMPORT_CODE"
+    # Still try to import the certificate
+    echo "Attempting certificate import at $(date)"
+    security import distribution.cert -k $KEYCHAIN_NAME -A -T /usr/bin/codesign -T /usr/bin/security
+    IMPORT_SUCCESS=true
     
-    if [ $IMPORT_CODE -eq 0 ]; then
-        echo "✓ Successfully imported certificate with basic import"
-        IMPORT_SUCCESS=true
-    else
-        echo "❌ Basic import failed, trying codesign access..."
-        
-        echo "=== Import Attempt 3: Codesign access ==="
-        set +e
-        IMPORT_OUTPUT=$(security import distribution.cert -k $KEYCHAIN_NAME -T /usr/bin/codesign 2>&1)
-        IMPORT_CODE=$?
-        set -e
-        echo "Command output: $IMPORT_OUTPUT"
-        echo "Exit code: $IMPORT_CODE"
-        
-        if [ $IMPORT_CODE -eq 0 ]; then
-            echo "✓ Successfully imported certificate with codesign access"
-            IMPORT_SUCCESS=true
-        else
-            echo "❌ Codesign access failed, trying keychain-only..."
-            
-            echo "=== Import Attempt 4: Keychain-only ==="
-            set +e
-            IMPORT_OUTPUT=$(security import distribution.cert -k $KEYCHAIN_NAME 2>&1)
-            IMPORT_CODE=$?
-            set -e
-            echo "Command output: $IMPORT_OUTPUT"
-            echo "Exit code: $IMPORT_CODE"
-            
-            if [ $IMPORT_CODE -eq 0 ]; then
-                echo "✓ Successfully imported certificate with keychain-only access"
-                IMPORT_SUCCESS=true
-            else
-                echo "❌ All import attempts failed. Trying with format specification..."
-                
-                # Check certificate format and try format-specific import
-                if openssl x509 -in distribution.cert -text -noout -inform DER >/dev/null 2>&1; then
-                    echo "Detected DER format certificate - trying with explicit format"
-                    if security import distribution.cert -k $KEYCHAIN_NAME -t cert -f raw -A; then
-                        echo "Successfully imported DER certificate with raw format"
-                        IMPORT_SUCCESS=true
-                    else
-                        echo "Failed to import DER certificate"
-                        exit 1
-                    fi
-                elif openssl x509 -in distribution.cert -text -noout -inform PEM >/dev/null 2>&1; then
-                    echo "Detected PEM format certificate - trying with explicit format"
-                    if security import distribution.cert -k $KEYCHAIN_NAME -t cert -f openssl -A; then
-                        echo "Successfully imported PEM certificate with openssl format"
-                        IMPORT_SUCCESS=true
-                    else
-                        echo "Failed to import PEM certificate"
-                        exit 1
-                    fi
-                else
-                    echo "Error: Cannot determine certificate format or import failed"
-                    echo "Certificate file info:"
-                    file distribution.cert 2>/dev/null || echo "file command not available"
-                    echo "Certificate file size: $(wc -c < distribution.cert) bytes"
-                    exit 1
-                fi
-            fi
-        fi
-    fi
+    echo ""
+    echo "IMPORTANT: If this build fails with 'No valid code signing certificates'"
+    echo "you need to export your certificate from Keychain Access as a .p12 file"
+    echo "that includes the private key, then encode that .p12 file to base64."
 fi
 
 rm -f distribution.cert
 
-echo "Certificate import completed - skipping detailed verification to avoid hangs"
+echo "Certificate import completed"
 
-# Minimal verification - just try to set key partition list
-echo "Setting up basic keychain permissions..."
-security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_NAME 2>/dev/null || echo "Key partition list setup skipped"
+# Set up keychain permissions for code signing
+echo "Setting up keychain permissions for code signing..."
+security set-key-partition-list -S apple-tool:,apple:,codesign: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_NAME 2>/dev/null || echo "Key partition list setup completed with warnings"
 
 echo "Certificate setup completed, proceeding to provisioning profile..."
 
@@ -200,11 +129,17 @@ fi
 echo "🔑 Keychain created: build.keychain"
 echo "📱 Provisioning profile installed"
 
-# Quick check for available identities
-echo "=== Quick identity check ==="
-IDENTITY_COUNT=$(security find-identity -v $KEYCHAIN_NAME 2>/dev/null | grep -c "valid identities found" || echo "0")
-echo "Total identities in keychain: checking..."
+# Check for available code signing identities
+echo "=== Code Signing Identity Check ==="
+echo "Checking for code signing identities in keychain..."
+security find-identity -v -p codesigning $KEYCHAIN_NAME 2>/dev/null || echo "Could not list code signing identities"
+
+echo "Checking all identities in keychain..."
 security find-identity -v $KEYCHAIN_NAME 2>/dev/null || echo "Could not list identities"
+
+# Additional check for certificates
+echo "Checking certificates in keychain..."
+security find-certificate -a $KEYCHAIN_NAME 2>/dev/null | head -10 || echo "Could not list certificates"
 
 echo "iOS code signing setup completed!"
 echo "=== SCRIPT COMPLETED SUCCESSFULLY ==="
