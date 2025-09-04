@@ -97,6 +97,12 @@ flutter run
 
 ## 版本历史
 
+### v1.1.1 (2025-01-04)
+- ✅ 修复 iOS 证书导入错误
+- ✅ 改进证书格式检测（支持 DER、PKCS#12、PEM）
+- ✅ 增强 GitHub Actions 错误处理
+- ✅ 更新证书配置文档
+
 ### v1.0.9 (2025-01-04)
 - ✅ iOS App Store 发布成功（TestFlight）
 - ✅ 修复 SwiftSupport 和隐私清单问题
