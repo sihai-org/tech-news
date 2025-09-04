@@ -79,16 +79,32 @@ fi
 
 # Try to import certificate with minimal parameters first
 echo "Attempting certificate import..."
-if security import distribution.cert -k $KEYCHAIN_NAME -A -T /usr/bin/codesign -T /usr/bin/security; then
+echo "Keychain name: $KEYCHAIN_NAME"
+echo "Certificate file: $(ls -la distribution.cert)"
+
+echo "=== Import Attempt 1: Extended access ==="
+if security import distribution.cert -k $KEYCHAIN_NAME -A -T /usr/bin/codesign -T /usr/bin/security 2>&1; then
     echo "✓ Successfully imported certificate with extended access"
-elif security import distribution.cert -k $KEYCHAIN_NAME -A; then
-    echo "✓ Successfully imported certificate with basic import"
-elif security import distribution.cert -k $KEYCHAIN_NAME -T /usr/bin/codesign; then
-    echo "✓ Successfully imported certificate with codesign access"
-elif security import distribution.cert -k $KEYCHAIN_NAME; then
-    echo "✓ Successfully imported certificate with keychain-only access"
 else
-    echo "All import attempts failed. Trying with format specification..."
+    echo "❌ Extended access import failed, trying basic import..."
+    
+    echo "=== Import Attempt 2: Basic import ==="
+    if security import distribution.cert -k $KEYCHAIN_NAME -A 2>&1; then
+        echo "✓ Successfully imported certificate with basic import"
+    else
+        echo "❌ Basic import failed, trying codesign access..."
+        
+        echo "=== Import Attempt 3: Codesign access ==="
+        if security import distribution.cert -k $KEYCHAIN_NAME -T /usr/bin/codesign 2>&1; then
+            echo "✓ Successfully imported certificate with codesign access"
+        else
+            echo "❌ Codesign access failed, trying keychain-only..."
+            
+            echo "=== Import Attempt 4: Keychain-only ==="
+            if security import distribution.cert -k $KEYCHAIN_NAME 2>&1; then
+                echo "✓ Successfully imported certificate with keychain-only access"
+            else
+                echo "❌ All import attempts failed. Trying with format specification..."
     
     # Check certificate format and try format-specific import
     if openssl x509 -in distribution.cert -text -noout -inform DER >/dev/null 2>&1; then
@@ -168,3 +184,4 @@ cp profile.mobileprovision "$PROVISION_PROFILE_PATH/$PROFILE_UUID.mobileprovisio
 rm profile.mobileprovision
 
 echo "iOS code signing setup completed!"
+echo "=== SCRIPT COMPLETED SUCCESSFULLY ==="
