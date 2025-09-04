@@ -41,11 +41,16 @@ echo "Importing distribution certificate..."
 # Decode base64 certificate
 echo "$DISTRIBUTION_CERT_BASE64" | base64 --decode > distribution.cert
 
-# Check certificate format using openssl and file command
-if openssl x509 -in distribution.cert -text -noout >/dev/null 2>&1; then
-    # It's a DER format certificate
+# Check certificate format using file command and openssl
+echo "Detecting certificate format..."
+
+# Check if it's a DER format certificate first (most common for Apple certificates)
+if openssl x509 -in distribution.cert -text -noout -inform DER >/dev/null 2>&1; then
     echo "Detected DER format certificate"
     security import distribution.cert -k $KEYCHAIN_NAME -t cert -f DER -A -T /usr/bin/codesign
+elif openssl x509 -in distribution.cert -text -noout -inform PEM >/dev/null 2>&1; then
+    echo "Detected PEM format certificate"
+    security import distribution.cert -k $KEYCHAIN_NAME -t cert -f PEM -A -T /usr/bin/codesign
 elif openssl pkcs12 -in distribution.cert -noout -passin pass: >/dev/null 2>&1; then
     # It's a PKCS#12 file with no password
     echo "Detected PKCS#12 certificate (no password)"
@@ -59,16 +64,17 @@ elif [ -n "${DISTRIBUTION_CERT_PASSWORD:-}" ] && openssl pkcs12 -in distribution
     security import distribution.p12 -k $KEYCHAIN_NAME -t cert -f pkcs12 -P "$DISTRIBUTION_CERT_PASSWORD" -A -T /usr/bin/codesign
     rm distribution.p12
 else
-    # Try to import as PEM format
-    echo "Trying to import as PEM certificate format"
-    if openssl x509 -in distribution.cert -text -noout -inform PEM >/dev/null 2>&1; then
-        security import distribution.cert -k $KEYCHAIN_NAME -t cert -f PEM -A -T /usr/bin/codesign
-    else
-        echo "Error: Cannot determine certificate format"
-        echo "Certificate file content (first few lines):"
-        head -5 distribution.cert
+    echo "Error: Cannot determine certificate format"
+    echo "File type detection:"
+    file distribution.cert || echo "file command not available"
+    echo "Certificate file size: $(wc -c < distribution.cert) bytes"
+    echo "Certificate file first 20 bytes (hex):"
+    hexdump -C distribution.cert | head -2
+    echo "Trying to import as raw DER format (fallback)..."
+    security import distribution.cert -k $KEYCHAIN_NAME -t cert -f DER -A -T /usr/bin/codesign || {
+        echo "Failed to import as DER format"
         exit 1
-    fi
+    }
 fi
 
 rm -f distribution.cert
