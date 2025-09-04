@@ -324,8 +324,14 @@ jobs:
         # Export signed IPA using xcodebuild
         cd ios
         
-        # Get the provisioning profile UUID that was installed
-        PROVISIONING_PROFILE_UUID=$(echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > temp.mobileprovision && /usr/libexec/PlistBuddy -c "Print :UUID" /dev/stdin <<< $(security cms -D -i temp.mobileprovision) && rm temp.mobileprovision)
+        # Use the provisioning profile UUID that was extracted during certificate import
+        # The UUID is already extracted and shown in the certificate import script output
+        # For now, let's use a simpler approach - the profile should already be installed
+        echo "Looking for installed provisioning profiles..."
+        ls -la "$HOME/Library/MobileDevice/Provisioning Profiles/" || echo "No profiles directory found"
+        
+        # Get the UUID from the profile that was installed
+        PROVISIONING_PROFILE_UUID=$(ls "$HOME/Library/MobileDevice/Provisioning Profiles/"*.mobileprovision | head -1 | xargs basename -s .mobileprovision)
         echo "Using Provisioning Profile UUID: $PROVISIONING_PROFILE_UUID"
         
         # Archive the app with explicit provisioning profile
