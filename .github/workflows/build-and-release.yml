@@ -330,9 +330,12 @@ jobs:
         echo "Looking for installed provisioning profiles..."
         ls -la "$HOME/Library/MobileDevice/Provisioning Profiles/" || echo "No profiles directory found"
         
-        # Get the UUID from the profile that was installed
-        PROVISIONING_PROFILE_UUID=$(ls "$HOME/Library/MobileDevice/Provisioning Profiles/"*.mobileprovision | head -1 | xargs basename -s .mobileprovision)
-        echo "Using Provisioning Profile UUID: $PROVISIONING_PROFILE_UUID"
+        # Get the UUID from the profile filename - it should be the filename without .mobileprovision
+        PROFILE_FILE=$(find "$HOME/Library/MobileDevice/Provisioning Profiles/" -name "*.mobileprovision" | head -1)
+        echo "Profile file found: $PROFILE_FILE"
+        
+        PROVISIONING_PROFILE_UUID=$(basename "$PROFILE_FILE" .mobileprovision)
+        echo "Extracted UUID: '$PROVISIONING_PROFILE_UUID'"
         
         # Archive the app with explicit provisioning profile
         xcodebuild -workspace Runner.xcworkspace \
