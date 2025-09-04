@@ -1,6 +1,6 @@
-# GitHub Radar Mobile
+# GitHub Radar News - Mobile App
 
-Flutter 移动应用，用于浏览 GitHub Radar CLI 生成的 AI 项目分析报告。
+Flutter 移动应用，用于浏览 GitHub Radar 生成的 AI 项目分析报告。支持 iOS 和 Android 平台。
 
 ## 功能特性
 
@@ -147,9 +147,30 @@ flutter pub get
 - **shared_preferences**: 本地存储
 - **flutter_dotenv**: 环境变量管理
 
+## 构建和发布
+
+### Android
+```bash
+flutter build apk --release
+```
+
+### iOS
+```bash
+flutter build ios --release --no-codesign
+# 详细流程见 iOS 构建指南
+```
+
 ## 注意事项
 
 1. **数据库连接**: 应用直接连接 Supabase，确保网络连接稳定
-2. **iOS 构建**: iOS 构建需要 macOS 环境和 Xcode
+2. **iOS 构建**: iOS 构建需要 macOS 环境和 Xcode，详见 [iOS 构建指南](../docs/mobile/ios-build-guide.md)
 3. **Android 签名**: 发布 Android 应用需要配置签名
 4. **权限设置**: 确保应用有网络访问权限
+
+## 相关文档
+
+- [Supabase 配置指南](../docs/mobile/supabase-setup.md) - 数据库连接配置
+- [iOS 构建指南](../docs/mobile/ios-build-guide.md) - 完整的 iOS 打包流程
+- [iOS 签名配置](../docs/mobile/ios-signing-setup.md) - 证书和签名设置
+- [iOS 证书管理](./ios/certs/README.md) - 本地证书管理
+- [GitHub Secrets 配置](./ios/certs/setup-github-secrets.md) - CI/CD 证书配置

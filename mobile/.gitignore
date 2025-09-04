@@ -44,3 +44,14 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# iOS certificates and provisioning profiles
+*.cer
+*.p12
+*.mobileprovision
+ios/certs/*.cer
+ios/certs/*.p12
+ios/certs/*.mobileprovision
+ios/certs/*.base64
+!ios/certs/README.md
+!ios/certs/setup-github-secrets.md

@@ -1,51 +1,140 @@
-# GitHub Radar
+# GitHub Radar News
 
-GitHub Open Source Radar - 发现趋势项目、快速增长项目和新发布的仓库的 CLI 工具和移动应用。
+AI 驱动的 GitHub 项目发现与分析平台，自动收集、分析并生成 GitHub 优质项目的深度报告。
 
-## 项目概述
+## 项目简介
 
-这是一个完整的 GitHub 项目趋势监控和分析解决方案，采用 **Monorepo** 架构，包含后端 CLI 工具和移动端应用。
+GitHub Radar News 是一个自动化的 GitHub 项目发现与分析平台，通过 AI 技术帮助开发者发现有价值的开源项目。系统每天自动收集热门仓库，使用 AI 生成深度分析报告，并通过移动应用展示给用户。
 
-### 🏗️ 项目结构
+## 主要功能
+
+- 🔍 **智能收集**: 自动从多个维度收集 GitHub 优质项目（每日趋势、新发布、特定语言等）
+- 🤖 **AI 分析**: 使用 GPT-4 和 DeepSeek 对项目进行深度分析，生成专业报告
+- 📱 **移动应用**: Flutter 跨平台应用，已发布到 App Store (TestFlight)
+- 🚀 **自动化工作流**: GitHub Actions 驱动的全自动化流程，每日定时运行
+- 📊 **数据持久化**: Supabase 提供可靠的云数据存储
+- 🌐 **多语言支持**: 覆盖主流编程语言的项目分析
+
+## 项目结构
 
 ```
-github-radar/
-├── cli/                    # CLI 工具和服务端
-│   ├── src/               # TypeScript 源码
-│   ├── package.json       # CLI 依赖配置
-│   └── README.md          # CLI 详细文档
-├── mobile/                # Flutter 移动应用
-│   ├── lib/               # Flutter 源码
-│   ├── pubspec.yaml       # Flutter 依赖配置
-│   └── README.md          # Mobile 详细文档
-├── shared/                # 共享资源
-│   ├── database/          # 数据库 Schema 和迁移
-│   └── config/            # 配置文件
-├── scripts/               # 构建和部署脚本
-└── docs/                  # 项目文档
+news-gh/
+├── core/              # 核心服务（收集、分析、API）
+│   ├── collectors/    # 数据收集器
+│   ├── analyzers/     # AI 分析器
+│   └── scripts/       # 运行脚本
+├── mobile/            # Flutter 移动应用
+│   ├── lib/          # 应用源码
+│   ├── ios/          # iOS 平台配置
+│   └── android/      # Android 平台配置
+├── shared/            # 共享资源
+│   └── database/     # 数据库 Schema
+├── docs/              # 项目文档
+│   ├── mobile/       # 移动端文档
+│   └── setup-guide.md # 配置指南
+└── .github/           # GitHub 配置
+    └── workflows/     # 自动化工作流
 ```
 
-### 🛠️ 后端 CLI 工具 (TypeScript)
-- **趋势发现**: 发现指定语言和时间窗口内的趋势项目
-- **快速增长监测**: 找出增长最快的项目（按星标增长速度）
-- **新项目追踪**: 监控新发布的有潜力的项目
-- **AI 分析**: 使用 AI 深度分析项目并生成报告
-- **数据存储**: 支持 Supabase 数据库存储分析结果
-- **微信发布**: 自动发布分析报告到微信公众号草稿
+## 技术栈
 
-### 📱 移动端应用 (Flutter)
-- **直连数据库**: 直接连接 Supabase，无需中间 API 服务器
-- **新闻浏览**: 以新闻形式展示 AI 生成的项目分析报告
-- **分类筛选**: 按编程语言和收集类型筛选内容
-- **搜索功能**: 搜索特定的分析报告
-- **下拉刷新**: 获取最新分析内容
-- **无限滚动**: 分页加载更多内容
-- **离线缓存**: 支持基本的离线阅读
-- **实时更新**: 利用 Supabase 实时功能（可扩展）
+- **后端**: Node.js, TypeScript
+- **移动端**: Flutter 3.2.4+, Dart
+- **数据库**: Supabase (PostgreSQL)
+- **AI**: OpenAI GPT-4, DeepSeek
+- **CI/CD**: GitHub Actions
+- **平台**: iOS 12.0+, Android, Web
 
-## 项目架构
+## 快速开始
 
-### 后端 CLI 工具结构
+### 1. 克隆项目
+```bash
+git clone https://github.com/yourusername/news-gh.git
+cd news-gh
+```
+
+### 2. 配置环境
+参考 [环境配置指南](docs/setup-guide.md) 设置必要的环境变量和密钥。
+
+### 3. 运行核心服务
+```bash
+cd core
+npm install
+npm run daily  # 运行每日收集和分析任务
+```
+
+### 4. 运行移动应用
+```bash
+cd mobile
+flutter pub get
+flutter run
+```
+
+详细说明请查看 [核心服务文档](core/README.md) 和 [移动应用文档](mobile/README.md)。
+
+## 文档索引
+
+### 核心文档
+- [核心服务 README](core/README.md) - 收集器和分析器详细说明
+- [移动应用 README](mobile/README.md) - Flutter 应用开发指南
+- [环境配置指南](docs/setup-guide.md) - 完整的环境配置说明
+
+### 移动应用文档
+- [iOS 构建指南](docs/mobile/ios-build-guide.md) - iOS 打包发布完整流程
+- [iOS 签名配置](docs/mobile/ios-signing-setup.md) - 证书和签名设置
+- [Supabase 配置](docs/mobile/supabase-setup.md) - 数据库连接配置
+
+### 证书管理
+- [本地证书管理](mobile/ios/certs/README.md) - 开发环境证书配置
+- [GitHub Secrets 配置](mobile/ios/certs/setup-github-secrets.md) - CI/CD 证书设置
+
+### 数据库
+- [数据库 Schema](shared/database/schema.sql) - 完整的数据库结构
+
+### CI/CD
+- [自动化工作流](.github/workflows/build-and-release.yml) - GitHub Actions 配置
+- [每日任务工作流](.github/workflows/daily-github-radar.yml) - 定时收集任务
+
+## 版本历史
+
+### v1.0.9 (2025-01-04)
+- ✅ iOS App Store 发布成功（TestFlight）
+- ✅ 修复 SwiftSupport 和隐私清单问题
+- ✅ 完善文档结构和 CI/CD 配置
+
+### v1.0.8 (2025-01-03)
+- 修复 Android 网络权限问题
+- 更新 iOS Bundle ID 为 `cn.datouai.technews`
+- 配置 iOS Distribution 证书
+
+### v1.0.7
+- 添加每日 GitHub Radar 收集工作流
+- 实现可配置的收集限制
+- 修复 DeepSeek 服务初始化问题
+
+## 开发状态
+
+- ✅ 核心收集和分析功能
+- ✅ Flutter 移动应用
+- ✅ iOS App Store 发布
+- ✅ 自动化工作流
+- 🚧 Android Google Play 发布
+- 📋 Web 版本开发
+
+## 贡献指南
+
+欢迎提交 Pull Request 和 Issue。开发前请阅读相关文档。
+
+## 许可证
+
+MIT
+
+---
+
+### 详细架构文档（原内容保留供参考）
+
+<details>
+<summary>后端 CLI 工具结构</summary>
 ```
 src/
 ├── commands/          # CLI 命令实现
@@ -440,15 +529,4 @@ npm run typecheck
 2. 检查 Supabase URL 和 Key 的有效性
 3. 验证网络连接
 
-## 更新记录
-
-- **v1.0.0**: 初始版本，基础雷达功能
-- **v1.0.1**: 模块化重构，添加数据库支持和 AI 分析功能
-- **v1.0.2**: 新增 Flutter 移动应用，支持跨平台新闻浏览体验
-- **v1.0.3**: 优化架构，Flutter 应用直连 Supabase 数据库
-- **v1.0.4**: 修复 Flutter 应用中的类型转换错误，提升 DateTime 字段处理的稳定性
-- **v1.0.5**: 重构为 Monorepo 架构，分离 CLI 工具和移动应用，提升开发效率和项目维护性，新增 GitHub Actions 自动构建和发布
-- **v1.0.6**: 配置 mobile-env 环境用于 CI/CD 构建流程
-- **v1.0.7**: 统一版本号管理，更新各模块版本至 1.0.7
-- **v1.0.8**: 修复 Android Release 版本缺少网络权限的关键问题
-- **v1.0.9**: iOS 签名构建配置，Bundle ID 更改为 cn.datouai.technews，支持 Distribution 证书签名
+</details>

@@ -25,9 +25,22 @@ security list-keychains -d user -s $KEYCHAIN_NAME login.keychain
 
 # Import distribution certificate
 echo "Importing distribution certificate..."
-echo "$DISTRIBUTION_CERT_BASE64" | base64 --decode > distribution.p12
-security import distribution.p12 -P "$DISTRIBUTION_CERT_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_NAME
-rm distribution.p12
+echo "$DISTRIBUTION_CERT_BASE64" | base64 --decode > distribution.cer
+
+# Check if it's a .cer or .p12 file
+if file distribution.cer | grep -q "certificate"; then
+    # It's a .cer file
+    echo "Detected .cer certificate file"
+    security import distribution.cer -A -t cert -f DER -k $KEYCHAIN_NAME
+else
+    # Assume it's a .p12 file
+    echo "Detected .p12 certificate file"
+    mv distribution.cer distribution.p12
+    security import distribution.p12 -P "$DISTRIBUTION_CERT_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_NAME
+    rm distribution.p12
+fi
+
+rm -f distribution.cer
 
 # Set key partition list to allow codesign to access the certificate
 security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_NAME

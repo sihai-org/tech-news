@@ -166,10 +166,10 @@ jobs:
         
     - name: Setup iOS Code Signing
       env:
-        DISTRIBUTION_CERT_BASE64: ${{ secrets.IOS_DISTRIBUTION_CERT_BASE64 }}
-        DISTRIBUTION_CERT_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_CERT_PASSWORD }}
-        PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
-        APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        DISTRIBUTION_CERT_BASE64: ${{ secrets.DISTRIBUTION_CERTIFICATE_BASE64 }}
+        PROVISIONING_PROFILE_BASE64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
+        KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        APPLE_TEAM_ID: ${{ secrets.TEAM_ID }}
       run: |
         # Run the certificate import script
         bash scripts/import-certificate.sh
@@ -190,7 +190,7 @@ jobs:
     - name: Build iOS (Signed Release build)
       working-directory: mobile
       env:
-        APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        APPLE_TEAM_ID: ${{ secrets.TEAM_ID }}
       run: |
         # Clean build directory
         flutter clean
