@@ -86,10 +86,32 @@
 可选的 Secrets：
 - `DISTRIBUTION_CERT_PASSWORD` - 仅当使用 .p12 格式证书时需要
 
+### 问题 7: 证书导入成功但无有效签名身份（最终发现）
+**错误信息**: `0 valid identities found` 尽管 `1 certificate imported`
+**原因**: 使用的是证书文件（.cer）而非 PKCS#12 文件，缺少私钥
+**解决方案**: 需要导出包含私钥的 .p12 文件并重新编码
+
+## 最终诊断结果
+
+通过 v1.1.20 的详细检测发现了根本问题：
+
+**证书类型检测**:
+```bash
+Certificate file type: Certificate, Version=3
+Detected certificate file (not PKCS#12)
+WARNING: Certificate files without private key cannot be used for code signing
+```
+
+**关键发现**：
+- 证书导入成功（`1 certificate imported`）
+- 但无有效签名身份（`0 valid identities found`）
+- 原因：.cer 文件只包含公钥证书，缺少代码签名必需的私钥
+
 ## 版本历史
 
 - v1.1.1: 初始修复尝试
-- v1.1.2: 参数顺序修复
+- v1.1.2: 参数顺序修复  
 - v1.1.3: 格式检测改进
 - v1.1.4: 格式参数修复
-- v1.1.5: 渐进式导入策略（最终解决方案）
+- v1.1.5-v1.1.19: 渐进式导入策略和脚本优化
+- v1.1.20: **最终诊断** - 发现私钥缺失问题并提供解决方案
