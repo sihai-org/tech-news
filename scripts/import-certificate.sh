@@ -41,23 +41,34 @@ echo "Importing distribution certificate..."
 # Decode base64 certificate
 echo "$DISTRIBUTION_CERT_BASE64" | base64 --decode > distribution.cert
 
-# Check certificate format using openssl
+# Check certificate format using openssl and file command
 if openssl x509 -in distribution.cert -text -noout >/dev/null 2>&1; then
-    # It's a .cer file (DER format)
-    echo "Detected .cer certificate file (DER format)"
-    security import distribution.cert -A -t cert -f DER -k $KEYCHAIN_NAME -T /usr/bin/codesign
-elif openssl pkcs12 -in distribution.cert -noout >/dev/null 2>&1; then
-    # It's a .p12 file
-    echo "Detected .p12 certificate file"
+    # It's a DER format certificate
+    echo "Detected DER format certificate"
+    security import distribution.cert -k $KEYCHAIN_NAME -t cert -f DER -A -T /usr/bin/codesign
+elif openssl pkcs12 -in distribution.cert -noout -passin pass: >/dev/null 2>&1; then
+    # It's a PKCS#12 file with no password
+    echo "Detected PKCS#12 certificate (no password)"
     mv distribution.cert distribution.p12
-    # Use empty password if DISTRIBUTION_CERT_PASSWORD is not set
-    CERT_PASSWORD="${DISTRIBUTION_CERT_PASSWORD:-}"
-    security import distribution.p12 -P "$CERT_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_NAME -T /usr/bin/codesign
+    security import distribution.p12 -k $KEYCHAIN_NAME -t cert -f pkcs12 -P "" -A -T /usr/bin/codesign
+    rm distribution.p12
+elif [ -n "${DISTRIBUTION_CERT_PASSWORD:-}" ] && openssl pkcs12 -in distribution.cert -noout -passin pass:"$DISTRIBUTION_CERT_PASSWORD" >/dev/null 2>&1; then
+    # It's a PKCS#12 file with password
+    echo "Detected PKCS#12 certificate (with password)"
+    mv distribution.cert distribution.p12
+    security import distribution.p12 -k $KEYCHAIN_NAME -t cert -f pkcs12 -P "$DISTRIBUTION_CERT_PASSWORD" -A -T /usr/bin/codesign
     rm distribution.p12
 else
     # Try to import as PEM format
     echo "Trying to import as PEM certificate format"
-    security import distribution.cert -A -t cert -f PEM -k $KEYCHAIN_NAME -T /usr/bin/codesign
+    if openssl x509 -in distribution.cert -text -noout -inform PEM >/dev/null 2>&1; then
+        security import distribution.cert -k $KEYCHAIN_NAME -t cert -f PEM -A -T /usr/bin/codesign
+    else
+        echo "Error: Cannot determine certificate format"
+        echo "Certificate file content (first few lines):"
+        head -5 distribution.cert
+        exit 1
+    fi
 fi
 
 rm -f distribution.cert
