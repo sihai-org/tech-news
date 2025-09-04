@@ -7,16 +7,30 @@ set -e
 
 echo "Setting up iOS code signing..."
 
+# Debug: Show all environment variables
+echo "=== Environment Variables Debug ==="
+echo "DISTRIBUTION_CERT_BASE64 length: ${#DISTRIBUTION_CERT_BASE64}"
+echo "PROVISIONING_PROFILE_BASE64 length: ${#PROVISIONING_PROFILE_BASE64}"
+echo "DISTRIBUTION_CERT_PASSWORD set: ${DISTRIBUTION_CERT_PASSWORD:+yes}"
+echo "KEYCHAIN_PASSWORD set: ${KEYCHAIN_PASSWORD:+yes}"
+echo "APPLE_TEAM_ID: ${APPLE_TEAM_ID}"
+
 # Validate required environment variables
 if [ -z "$DISTRIBUTION_CERT_BASE64" ]; then
-    echo "Error: DISTRIBUTION_CERT_BASE64 environment variable is not set"
+    echo "ERROR: DISTRIBUTION_CERT_BASE64 environment variable is not set"
+    echo "Available environment variables:"
+    env | grep -E "(CERT|DISTRIBUTION|APPLE)" || echo "No certificate-related env vars found"
     exit 1
 fi
 
 if [ -z "$PROVISIONING_PROFILE_BASE64" ]; then
-    echo "Error: PROVISIONING_PROFILE_BASE64 environment variable is not set"
+    echo "ERROR: PROVISIONING_PROFILE_BASE64 environment variable is not set" 
+    echo "Available environment variables:"
+    env | grep -E "(PROFILE|PROVISIONING)" || echo "No provisioning-related env vars found"
     exit 1
 fi
+
+echo "✓ Environment variables validation passed"
 
 # Create a temporary keychain
 KEYCHAIN_NAME="build.keychain"

@@ -177,6 +177,14 @@ jobs:
         echo "Available scripts:"
         ls -la scripts/
         
+        # Debug: Check environment variables (without revealing secrets)
+        echo "=== Environment Variables Status ==="
+        echo "DISTRIBUTION_CERT_BASE64 set: ${DISTRIBUTION_CERT_BASE64:+yes}"
+        echo "PROVISIONING_PROFILE_BASE64 set: ${PROVISIONING_PROFILE_BASE64:+yes}"  
+        echo "DISTRIBUTION_CERT_PASSWORD set: ${DISTRIBUTION_CERT_PASSWORD:+yes}"
+        echo "KEYCHAIN_PASSWORD set: ${KEYCHAIN_PASSWORD:+yes}"
+        echo "APPLE_TEAM_ID: ${APPLE_TEAM_ID}"
+        
         # Run the certificate import script
         echo "=== Running certificate import script ==="
         bash scripts/import-certificate.sh
