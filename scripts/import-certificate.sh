@@ -175,30 +175,30 @@ echo "Verifying certificate import in keychain: $KEYCHAIN_NAME"
 echo "Keychain path: $HOME/Library/Keychains/$KEYCHAIN_NAME-db"
 
 # List all identities in keychain (for debugging)
-echo "=== All identities in keychain ==="
-security find-identity -v $KEYCHAIN_NAME
+echo "=== All identities in keychain at $(date) ==="
+timeout 30 security find-identity -v $KEYCHAIN_NAME || echo "Timeout or error listing identities"
 
-echo "=== Codesigning identities ==="
-security find-identity -v -p codesigning $KEYCHAIN_NAME
+echo "=== Codesigning identities at $(date) ==="
+timeout 30 security find-identity -v -p codesigning $KEYCHAIN_NAME || echo "Timeout or error listing codesigning identities"
 
-echo "=== Certificate details ==="
-security dump-keychain $KEYCHAIN_NAME | grep -A 10 -B 5 "Apple Distribution"
-if security find-identity -v -p codesigning $KEYCHAIN_NAME | grep -q "Apple Distribution"; then
+echo "=== Checking for Apple Distribution certificate at $(date) ==="
+# Skip dump-keychain command as it may cause hangs
+if timeout 30 security find-identity -v -p codesigning $KEYCHAIN_NAME | grep -q "Apple Distribution"; then
     echo "✓ Apple Distribution certificate found in keychain"
     
     # Set key partition list to allow codesign to access the certificate
-    echo "Setting up keychain access permissions..."
-    if security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_NAME 2>/dev/null; then
+    echo "Setting up keychain access permissions at $(date)..."
+    if timeout 30 security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_NAME 2>/dev/null; then
         echo "✓ Successfully set key partition list"
     else
-        echo "⚠ Warning: Could not set key partition list"
+        echo "⚠ Warning: Could not set key partition list (timeout or error)"
         echo "  This is normal for certificates without private keys"
         echo "  Code signing may still work if the certificate is valid"
     fi
 else
     echo "⚠ Warning: Could not find Apple Distribution certificate"
     echo "Available identities:"
-    security find-identity -v $KEYCHAIN_NAME || echo "No identities found"
+    timeout 30 security find-identity -v $KEYCHAIN_NAME || echo "No identities found or timeout"
     echo "Continuing with provisioning profile installation..."
 fi
 
