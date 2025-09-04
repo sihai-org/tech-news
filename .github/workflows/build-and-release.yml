@@ -172,8 +172,15 @@ jobs:
         KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         APPLE_TEAM_ID: ${{ secrets.TEAM_ID }}
       run: |
+        # Debug: Show current directory and script location
+        echo "Current directory: $(pwd)"
+        echo "Available scripts:"
+        ls -la scripts/
+        
         # Run the certificate import script
+        echo "=== Running certificate import script ==="
         bash scripts/import-certificate.sh
+        echo "=== Certificate import script completed ==="
         
         # Get provisioning profile UUID for ExportOptions
         echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > temp.mobileprovision
@@ -197,6 +204,14 @@ jobs:
         # Clean build directory
         flutter clean
         flutter pub get
+        
+        # Debug: Check what happened in the certificate import step
+        echo "=== POST-IMPORT KEYCHAIN STATUS ==="
+        echo "Current directory: $(pwd)"
+        echo "All keychains:"
+        security list-keychains -d user
+        echo "Checking for build.keychain..."
+        ls -la "$HOME/Library/Keychains/" | grep build || echo "No build keychain found"
         
         # Ensure keychain is available for signing
         echo "Setting up keychain for Flutter build..."
