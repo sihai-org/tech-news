@@ -243,15 +243,33 @@ jobs:
         # Set up keychain for signing
         if [ -f "$HOME/Library/Keychains/$KEYCHAIN_NAME-db" ]; then
             echo "Found keychain at: $HOME/Library/Keychains/$KEYCHAIN_NAME-db"
+            
+            # Make sure keychain is unlocked and set as default
+            echo "Unlocking and configuring keychain..."
+            security unlock-keychain -p "$KEYCHAIN_PASS" $KEYCHAIN_NAME
             security list-keychains -d user -s $KEYCHAIN_NAME login.keychain
             security default-keychain -s $KEYCHAIN_NAME
-            security unlock-keychain -p "$KEYCHAIN_PASS" $KEYCHAIN_NAME
+            
+            # Set key partition list for all keys in the keychain
+            echo "Setting key partition list for codesigning..."
+            security set-key-partition-list -S apple-tool:,apple:,codesign: -k "$KEYCHAIN_PASS" $KEYCHAIN_NAME
             
             # Verify certificate is available
             echo "Available signing identities in $KEYCHAIN_NAME:"
             security find-identity -v -p codesigning $KEYCHAIN_NAME
             echo "All identities in $KEYCHAIN_NAME:"
             security find-identity -v $KEYCHAIN_NAME
+            
+            # Additional check - verify the certificate can be used for codesigning
+            echo "Testing certificate access for codesigning..."
+            CERT_IDENTITY=$(security find-identity -v -p codesigning $KEYCHAIN_NAME | head -1 | awk '{print $2}')
+            if [ -n "$CERT_IDENTITY" ]; then
+                echo "Found certificate identity: $CERT_IDENTITY"
+                echo "Certificate is available for codesigning"
+            else
+                echo "ERROR: No valid certificate identity found for codesigning"
+                exit 1
+            fi
         else
             echo "ERROR: Keychain $KEYCHAIN_NAME not found!"
             echo "Available keychains:"
@@ -269,10 +287,29 @@ jobs:
         
         cd ..
         
-        # Build with code signing
+        # Get the certificate identity for explicit signing
+        echo "Extracting certificate identity for Flutter build..."
+        CERT_IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "Apple Distribution" | head -1 | awk '{print $2}')
+        echo "Using certificate identity: $CERT_IDENTITY"
+        
+        # Build with explicit code signing identity
+        echo "Building iOS with explicit code signing..."
         flutter build ios --release \
           --build-name=1.1.6 \
-          --build-number=1
+          --build-number=1 \
+          --no-codesign || {
+            echo "Flutter build failed, checking keychain status again..."
+            security list-keychains -d user
+            security find-identity -v -p codesigning build.keychain
+            exit 1
+        }
+        
+        # Manual code signing after Flutter build
+        echo "Applying code signature to built app..."
+        cd build/ios/iphoneos
+        codesign --force --deep --sign "$CERT_IDENTITY" Runner.app
+        echo "Manual code signing completed"
+        cd ../../..
         
         # Verify the signed build
         echo "=== Verifying signed build ==="
