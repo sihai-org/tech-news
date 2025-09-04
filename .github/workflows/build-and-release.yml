@@ -222,6 +222,14 @@ jobs:
         flutter clean
         flutter pub get
         
+        # Reinstall pods to apply updated Podfile configuration
+        echo "Reinstalling Pods to apply updated configuration..."
+        cd ios
+        rm -rf Pods
+        rm Podfile.lock
+        pod install
+        cd ..
+        
         # Debug: Check what happened in the certificate import step
         echo "=== POST-IMPORT KEYCHAIN STATUS ==="
         echo "Current directory: $(pwd)"
