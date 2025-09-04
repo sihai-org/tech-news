@@ -134,30 +134,35 @@ else
                 IMPORT_SUCCESS=true
             else
                 echo "❌ All import attempts failed. Trying with format specification..."
-    
-    # Check certificate format and try format-specific import
-    if openssl x509 -in distribution.cert -text -noout -inform DER >/dev/null 2>&1; then
-        echo "Detected DER format certificate - trying with explicit format"
-        if security import distribution.cert -k $KEYCHAIN_NAME -t cert -f raw -A; then
-            echo "Successfully imported DER certificate with raw format"
-        else
-            echo "Failed to import DER certificate"
-            exit 1
+                
+                # Check certificate format and try format-specific import
+                if openssl x509 -in distribution.cert -text -noout -inform DER >/dev/null 2>&1; then
+                    echo "Detected DER format certificate - trying with explicit format"
+                    if security import distribution.cert -k $KEYCHAIN_NAME -t cert -f raw -A; then
+                        echo "Successfully imported DER certificate with raw format"
+                        IMPORT_SUCCESS=true
+                    else
+                        echo "Failed to import DER certificate"
+                        exit 1
+                    fi
+                elif openssl x509 -in distribution.cert -text -noout -inform PEM >/dev/null 2>&1; then
+                    echo "Detected PEM format certificate - trying with explicit format"
+                    if security import distribution.cert -k $KEYCHAIN_NAME -t cert -f openssl -A; then
+                        echo "Successfully imported PEM certificate with openssl format"
+                        IMPORT_SUCCESS=true
+                    else
+                        echo "Failed to import PEM certificate"
+                        exit 1
+                    fi
+                else
+                    echo "Error: Cannot determine certificate format or import failed"
+                    echo "Certificate file info:"
+                    file distribution.cert 2>/dev/null || echo "file command not available"
+                    echo "Certificate file size: $(wc -c < distribution.cert) bytes"
+                    exit 1
+                fi
+            fi
         fi
-    elif openssl x509 -in distribution.cert -text -noout -inform PEM >/dev/null 2>&1; then
-        echo "Detected PEM format certificate - trying with explicit format"
-        if security import distribution.cert -k $KEYCHAIN_NAME -t cert -f openssl -A; then
-            echo "Successfully imported PEM certificate with openssl format"
-        else
-            echo "Failed to import PEM certificate"
-            exit 1
-        fi
-    else
-        echo "Error: Cannot determine certificate format or import failed"
-        echo "Certificate file info:"
-        file distribution.cert 2>/dev/null || echo "file command not available"
-        echo "Certificate file size: $(wc -c < distribution.cert) bytes"
-        exit 1
     fi
 fi
 
