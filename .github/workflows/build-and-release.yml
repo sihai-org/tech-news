@@ -192,10 +192,31 @@ jobs:
       working-directory: mobile
       env:
         APPLE_TEAM_ID: ${{ secrets.TEAM_ID }}
+        KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
       run: |
         # Clean build directory
         flutter clean
         flutter pub get
+        
+        # Ensure keychain is available for signing
+        echo "Setting up keychain for Flutter build..."
+        security list-keychains -d user -s build.keychain login.keychain
+        security default-keychain -s build.keychain
+        security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+        
+        # Verify certificate is available
+        echo "Available signing identities:"
+        security find-identity -v -p codesigning build.keychain
+        
+        # Configure code signing for iOS project
+        echo "Configuring iOS project for code signing..."
+        cd ios
+        
+        # Update Runner.xcodeproj with Team ID
+        sed -i '' "s/DEVELOPMENT_TEAM = .*/DEVELOPMENT_TEAM = $APPLE_TEAM_ID;/" Runner.xcodeproj/project.pbxproj || echo "Could not set DEVELOPMENT_TEAM"
+        sed -i '' "s/CODE_SIGN_STYLE = .*/CODE_SIGN_STYLE = Automatic;/" Runner.xcodeproj/project.pbxproj || echo "Could not set CODE_SIGN_STYLE"
+        
+        cd ..
         
         # Build with code signing
         flutter build ios --release \
@@ -210,7 +231,7 @@ jobs:
     - name: Create iOS IPA (Signed Distribution package)
       working-directory: mobile
       env:
-        APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        APPLE_TEAM_ID: ${{ secrets.TEAM_ID }}
       run: |
         # Export signed IPA using xcodebuild
         cd ios
