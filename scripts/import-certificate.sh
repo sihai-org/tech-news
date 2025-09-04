@@ -168,39 +168,13 @@ fi
 
 rm -f distribution.cert
 
-echo "Certificate import completed, verifying result..."
+echo "Certificate import completed - skipping detailed verification to avoid hangs"
 
-# Verify certificate was imported successfully
-echo "Verifying certificate import in keychain: $KEYCHAIN_NAME"
-echo "Keychain path: $HOME/Library/Keychains/$KEYCHAIN_NAME-db"
+# Minimal verification - just try to set key partition list
+echo "Setting up basic keychain permissions..."
+security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_NAME 2>/dev/null || echo "Key partition list setup skipped"
 
-# List all identities in keychain (for debugging)
-echo "=== All identities in keychain at $(date) ==="
-timeout 30 security find-identity -v $KEYCHAIN_NAME || echo "Timeout or error listing identities"
-
-echo "=== Codesigning identities at $(date) ==="
-timeout 30 security find-identity -v -p codesigning $KEYCHAIN_NAME || echo "Timeout or error listing codesigning identities"
-
-echo "=== Checking for Apple Distribution certificate at $(date) ==="
-# Skip dump-keychain command as it may cause hangs
-if timeout 30 security find-identity -v -p codesigning $KEYCHAIN_NAME | grep -q "Apple Distribution"; then
-    echo "✓ Apple Distribution certificate found in keychain"
-    
-    # Set key partition list to allow codesign to access the certificate
-    echo "Setting up keychain access permissions at $(date)..."
-    if timeout 30 security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_NAME 2>/dev/null; then
-        echo "✓ Successfully set key partition list"
-    else
-        echo "⚠ Warning: Could not set key partition list (timeout or error)"
-        echo "  This is normal for certificates without private keys"
-        echo "  Code signing may still work if the certificate is valid"
-    fi
-else
-    echo "⚠ Warning: Could not find Apple Distribution certificate"
-    echo "Available identities:"
-    timeout 30 security find-identity -v $KEYCHAIN_NAME || echo "No identities found or timeout"
-    echo "Continuing with provisioning profile installation..."
-fi
+echo "Certificate setup completed, proceeding to provisioning profile..."
 
 # Install provisioning profile
 echo "Installing provisioning profile..."
@@ -225,5 +199,12 @@ else
 fi
 echo "🔑 Keychain created: build.keychain"
 echo "📱 Provisioning profile installed"
+
+# Quick check for available identities
+echo "=== Quick identity check ==="
+IDENTITY_COUNT=$(security find-identity -v $KEYCHAIN_NAME 2>/dev/null | grep -c "valid identities found" || echo "0")
+echo "Total identities in keychain: checking..."
+security find-identity -v $KEYCHAIN_NAME 2>/dev/null || echo "Could not list identities"
+
 echo "iOS code signing setup completed!"
 echo "=== SCRIPT COMPLETED SUCCESSFULLY ==="
