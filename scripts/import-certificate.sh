@@ -66,28 +66,89 @@ echo "Certificate file size: $(wc -c < distribution.cert) bytes"
 echo "Certificate file type:"
 file distribution.cert
 
-# Check if this is a PKCS#12 file (which contains both certificate and private key)
-if file distribution.cert | grep -q "PKCS"; then
-    echo "Detected PKCS#12 format - importing with password"
+# Check if this is a PKCS#12 file (multiple methods for detection)
+IS_PKCS12=false
+
+# Method 1: Check file command output for PKCS patterns
+if file distribution.cert | grep -qE "(PKCS|data)"; then
+    echo "File command shows potential PKCS#12 format (or generic data)"
+    
+    # Method 2: Try OpenSSL PKCS#12 verification
+    if openssl pkcs12 -info -in distribution.cert -noout -passin pass: 2>/dev/null; then
+        echo "✓ OpenSSL confirms this is PKCS#12 format (no password)"
+        IS_PKCS12=true
+    elif openssl pkcs12 -info -in distribution.cert -noout -passin pass:"${DISTRIBUTION_CERT_PASSWORD:-}" 2>/dev/null; then
+        echo "✓ OpenSSL confirms this is PKCS#12 format (with password)"
+        IS_PKCS12=true
+    elif [ -n "$DISTRIBUTION_CERT_PASSWORD" ]; then
+        echo "Password provided - assuming PKCS#12 format and attempting import"
+        IS_PKCS12=true
+    else
+        echo "Cannot verify PKCS#12 with OpenSSL, but file suggests binary format"
+        # If file size increased significantly, likely PKCS#12
+        if [ $(wc -c < distribution.cert) -gt 2000 ]; then
+            echo "File size suggests PKCS#12 format - attempting PKCS#12 import"
+            IS_PKCS12=true
+        fi
+    fi
+fi
+
+if [ "$IS_PKCS12" = true ]; then
+    echo "=== Importing PKCS#12 certificate ==="
     CERT_PASSWORD="${DISTRIBUTION_CERT_PASSWORD:-}"
     
     if [ -z "$CERT_PASSWORD" ]; then
-        echo "WARNING: PKCS#12 file detected but no password provided. Trying without password..."
-        security import distribution.cert -k $KEYCHAIN_NAME -A -T /usr/bin/codesign -T /usr/bin/security
+        echo "Attempting PKCS#12 import without password..."
+        set +e
+        IMPORT_OUTPUT=$(security import distribution.cert -k $KEYCHAIN_NAME -A -T /usr/bin/codesign -T /usr/bin/security 2>&1)
+        IMPORT_CODE=$?
+        set -e
+        echo "Import output: $IMPORT_OUTPUT"
+        echo "Import exit code: $IMPORT_CODE"
     else
-        echo "Importing PKCS#12 with password"
-        security import distribution.cert -k $KEYCHAIN_NAME -P "$CERT_PASSWORD" -A -T /usr/bin/codesign -T /usr/bin/security
+        echo "Attempting PKCS#12 import with password..."
+        set +e
+        IMPORT_OUTPUT=$(security import distribution.cert -k $KEYCHAIN_NAME -P "$CERT_PASSWORD" -A -T /usr/bin/codesign -T /usr/bin/security 2>&1)
+        IMPORT_CODE=$?
+        set -e
+        echo "Import output: $IMPORT_OUTPUT"
+        echo "Import exit code: $IMPORT_CODE"
     fi
-    IMPORT_SUCCESS=true
+    
+    if [ $IMPORT_CODE -eq 0 ]; then
+        echo "✅ PKCS#12 certificate imported successfully"
+        IMPORT_SUCCESS=true
+    else
+        echo "❌ PKCS#12 import failed, trying as regular certificate..."
+        IMPORT_SUCCESS=false
+    fi
 else
-    echo "Detected certificate file (not PKCS#12)"
+    echo "=== Detected regular certificate file ==="
+    IMPORT_SUCCESS=false
+fi
+
+# Fallback: try regular certificate import if PKCS#12 failed or not detected
+if [ "$IMPORT_SUCCESS" = false ]; then
     echo "WARNING: Certificate files without private key cannot be used for code signing"
     echo "For GitHub Actions, you typically need a PKCS#12 (.p12) file that includes the private key"
     
-    # Still try to import the certificate
-    echo "Attempting certificate import at $(date)"
-    security import distribution.cert -k $KEYCHAIN_NAME -A -T /usr/bin/codesign -T /usr/bin/security
-    IMPORT_SUCCESS=true
+    echo "Attempting regular certificate import at $(date)"
+    set +e
+    IMPORT_OUTPUT=$(security import distribution.cert -k $KEYCHAIN_NAME -A -T /usr/bin/codesign -T /usr/bin/security 2>&1)
+    IMPORT_CODE=$?
+    set -e
+    echo "Import output: $IMPORT_OUTPUT"
+    echo "Import exit code: $IMPORT_CODE"
+    
+    if [ $IMPORT_CODE -eq 0 ]; then
+        echo "✅ Certificate imported (but likely missing private key)"
+        IMPORT_SUCCESS=true
+    else
+        echo "❌ Certificate import failed"
+        echo ""
+        echo "IMPORTANT: This appears to be neither a valid PKCS#12 nor certificate file"
+        echo "Please verify the certificate file format and try again"
+    fi
     
     echo ""
     echo "IMPORTANT: If this build fails with 'No valid code signing certificates'"
