@@ -185,9 +185,18 @@ jobs:
         echo "KEYCHAIN_PASSWORD set: ${KEYCHAIN_PASSWORD:+yes}"
         echo "APPLE_TEAM_ID: ${APPLE_TEAM_ID}"
         
+        # Test script execution first
+        echo "=== Testing script execution ==="
+        echo "Script path exists: $(test -f scripts/import-certificate.sh && echo 'YES' || echo 'NO')"
+        echo "Script is executable: $(test -x scripts/import-certificate.sh && echo 'YES' || echo 'NO')"
+        
+        # Try a simple bash test first
+        echo "=== Testing bash execution ==="
+        bash -c "echo 'Bash test successful'"
+        
         # Run the certificate import script
         echo "=== Running certificate import script ==="
-        bash scripts/import-certificate.sh
+        bash scripts/import-certificate.sh || echo "Script failed with exit code: $?"
         echo "=== Certificate import script completed ==="
         
         # Get provisioning profile UUID for ExportOptions

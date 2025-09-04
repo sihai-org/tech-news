@@ -3,9 +3,13 @@
 # Script to import Apple certificates for iOS signing in CI/CD
 # This script is used in GitHub Actions to set up code signing
 
-set -e
+# Temporarily disable exit on error for debugging
+# set -e
 
+echo "=== SCRIPT STARTED ==="
 echo "Setting up iOS code signing..."
+echo "Script arguments: $@"
+echo "Current working directory: $(pwd)"
 
 # Debug: Show all environment variables
 echo "=== Environment Variables Debug ==="
