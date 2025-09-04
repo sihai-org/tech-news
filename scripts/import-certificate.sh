@@ -47,10 +47,12 @@ echo "Detecting certificate format..."
 # Check if it's a DER format certificate first (most common for Apple certificates)
 if openssl x509 -in distribution.cert -text -noout -inform DER >/dev/null 2>&1; then
     echo "Detected DER format certificate"
-    security import distribution.cert -k $KEYCHAIN_NAME -t cert -f DER -A -T /usr/bin/codesign
+    # For DER format certificates, use 'raw' format in security import
+    security import distribution.cert -k $KEYCHAIN_NAME -t cert -f raw -A -T /usr/bin/codesign
 elif openssl x509 -in distribution.cert -text -noout -inform PEM >/dev/null 2>&1; then
     echo "Detected PEM format certificate"
-    security import distribution.cert -k $KEYCHAIN_NAME -t cert -f PEM -A -T /usr/bin/codesign
+    # For PEM format certificates, use 'openssl' format in security import
+    security import distribution.cert -k $KEYCHAIN_NAME -t cert -f openssl -A -T /usr/bin/codesign
 elif openssl pkcs12 -in distribution.cert -noout -passin pass: >/dev/null 2>&1; then
     # It's a PKCS#12 file with no password
     echo "Detected PKCS#12 certificate (no password)"
@@ -70,9 +72,9 @@ else
     echo "Certificate file size: $(wc -c < distribution.cert) bytes"
     echo "Certificate file first 20 bytes (hex):"
     hexdump -C distribution.cert | head -2
-    echo "Trying to import as raw DER format (fallback)..."
-    security import distribution.cert -k $KEYCHAIN_NAME -t cert -f DER -A -T /usr/bin/codesign || {
-        echo "Failed to import as DER format"
+    echo "Trying to import as raw format (fallback)..."
+    security import distribution.cert -k $KEYCHAIN_NAME -t cert -f raw -A -T /usr/bin/codesign || {
+        echo "Failed to import as raw format"
         exit 1
     }
 fi
