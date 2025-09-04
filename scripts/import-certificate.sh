@@ -82,27 +82,61 @@ echo "Attempting certificate import..."
 echo "Keychain name: $KEYCHAIN_NAME"
 echo "Certificate file: $(ls -la distribution.cert)"
 
+IMPORT_SUCCESS=false
+
 echo "=== Import Attempt 1: Extended access ==="
-if security import distribution.cert -k $KEYCHAIN_NAME -A -T /usr/bin/codesign -T /usr/bin/security 2>&1; then
+set +e  # Disable exit on error for this section
+IMPORT_OUTPUT=$(security import distribution.cert -k $KEYCHAIN_NAME -A -T /usr/bin/codesign -T /usr/bin/security 2>&1)
+IMPORT_CODE=$?
+set -e  # Re-enable exit on error
+echo "Command output: $IMPORT_OUTPUT"
+echo "Exit code: $IMPORT_CODE"
+
+if [ $IMPORT_CODE -eq 0 ]; then
     echo "✓ Successfully imported certificate with extended access"
+    IMPORT_SUCCESS=true
 else
     echo "❌ Extended access import failed, trying basic import..."
     
     echo "=== Import Attempt 2: Basic import ==="
-    if security import distribution.cert -k $KEYCHAIN_NAME -A 2>&1; then
+    set +e
+    IMPORT_OUTPUT=$(security import distribution.cert -k $KEYCHAIN_NAME -A 2>&1)
+    IMPORT_CODE=$?
+    set -e
+    echo "Command output: $IMPORT_OUTPUT"
+    echo "Exit code: $IMPORT_CODE"
+    
+    if [ $IMPORT_CODE -eq 0 ]; then
         echo "✓ Successfully imported certificate with basic import"
+        IMPORT_SUCCESS=true
     else
         echo "❌ Basic import failed, trying codesign access..."
         
         echo "=== Import Attempt 3: Codesign access ==="
-        if security import distribution.cert -k $KEYCHAIN_NAME -T /usr/bin/codesign 2>&1; then
+        set +e
+        IMPORT_OUTPUT=$(security import distribution.cert -k $KEYCHAIN_NAME -T /usr/bin/codesign 2>&1)
+        IMPORT_CODE=$?
+        set -e
+        echo "Command output: $IMPORT_OUTPUT"
+        echo "Exit code: $IMPORT_CODE"
+        
+        if [ $IMPORT_CODE -eq 0 ]; then
             echo "✓ Successfully imported certificate with codesign access"
+            IMPORT_SUCCESS=true
         else
             echo "❌ Codesign access failed, trying keychain-only..."
             
             echo "=== Import Attempt 4: Keychain-only ==="
-            if security import distribution.cert -k $KEYCHAIN_NAME 2>&1; then
+            set +e
+            IMPORT_OUTPUT=$(security import distribution.cert -k $KEYCHAIN_NAME 2>&1)
+            IMPORT_CODE=$?
+            set -e
+            echo "Command output: $IMPORT_OUTPUT"
+            echo "Exit code: $IMPORT_CODE"
+            
+            if [ $IMPORT_CODE -eq 0 ]; then
                 echo "✓ Successfully imported certificate with keychain-only access"
+                IMPORT_SUCCESS=true
             else
                 echo "❌ All import attempts failed. Trying with format specification..."
     
@@ -183,5 +217,13 @@ echo "Provisioning Profile UUID: $PROFILE_UUID"
 cp profile.mobileprovision "$PROVISION_PROFILE_PATH/$PROFILE_UUID.mobileprovision"
 rm profile.mobileprovision
 
+echo "=== FINAL STATUS ==="
+if [ "$IMPORT_SUCCESS" = true ]; then
+    echo "✅ Certificate import: SUCCESS"
+else
+    echo "❌ Certificate import: FAILED"
+fi
+echo "🔑 Keychain created: build.keychain"
+echo "📱 Provisioning profile installed"
 echo "iOS code signing setup completed!"
 echo "=== SCRIPT COMPLETED SUCCESSFULLY ==="
