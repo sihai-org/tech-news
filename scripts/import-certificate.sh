@@ -20,7 +20,8 @@ fi
 
 # Create a temporary keychain
 KEYCHAIN_NAME="build.keychain"
-KEYCHAIN_PASSWORD="${KEYCHAIN_PASSWORD:-temp_password_$(date +%s)}"
+# Use provided password or default to a consistent one
+KEYCHAIN_PASSWORD="${KEYCHAIN_PASSWORD:-build_keychain_password}"
 
 # Delete keychain if it exists (suppress error output)
 security delete-keychain $KEYCHAIN_NAME 2>/dev/null || true

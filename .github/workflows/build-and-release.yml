@@ -200,13 +200,32 @@ jobs:
         
         # Ensure keychain is available for signing
         echo "Setting up keychain for Flutter build..."
-        security list-keychains -d user -s build.keychain login.keychain
-        security default-keychain -s build.keychain
-        security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+        KEYCHAIN_NAME="build.keychain"
+        # Use same password as import script
+        KEYCHAIN_PASS="${KEYCHAIN_PASSWORD:-build_keychain_password}"
         
-        # Verify certificate is available
-        echo "Available signing identities:"
-        security find-identity -v -p codesigning build.keychain
+        # Check if keychain exists
+        echo "Checking keychain status..."
+        security list-keychains -d user
+        
+        # Set up keychain for signing
+        if [ -f "$HOME/Library/Keychains/$KEYCHAIN_NAME-db" ]; then
+            echo "Found keychain at: $HOME/Library/Keychains/$KEYCHAIN_NAME-db"
+            security list-keychains -d user -s $KEYCHAIN_NAME login.keychain
+            security default-keychain -s $KEYCHAIN_NAME
+            security unlock-keychain -p "$KEYCHAIN_PASS" $KEYCHAIN_NAME
+            
+            # Verify certificate is available
+            echo "Available signing identities in $KEYCHAIN_NAME:"
+            security find-identity -v -p codesigning $KEYCHAIN_NAME
+            echo "All identities in $KEYCHAIN_NAME:"
+            security find-identity -v $KEYCHAIN_NAME
+        else
+            echo "ERROR: Keychain $KEYCHAIN_NAME not found!"
+            echo "Available keychains:"
+            ls -la "$HOME/Library/Keychains/"
+            exit 1
+        fi
         
         # Configure code signing for iOS project
         echo "Configuring iOS project for code signing..."
