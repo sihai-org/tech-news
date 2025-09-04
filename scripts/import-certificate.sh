@@ -41,42 +41,43 @@ echo "Importing distribution certificate..."
 # Decode base64 certificate
 echo "$DISTRIBUTION_CERT_BASE64" | base64 --decode > distribution.cert
 
-# Check certificate format using file command and openssl
-echo "Detecting certificate format..."
+# Import certificate using simplified approach
+echo "Importing certificate..."
 
-# Check if it's a DER format certificate first (most common for Apple certificates)
-if openssl x509 -in distribution.cert -text -noout -inform DER >/dev/null 2>&1; then
-    echo "Detected DER format certificate"
-    # For DER format certificates, use 'raw' format in security import
-    security import distribution.cert -k $KEYCHAIN_NAME -t cert -f raw -A -T /usr/bin/codesign
-elif openssl x509 -in distribution.cert -text -noout -inform PEM >/dev/null 2>&1; then
-    echo "Detected PEM format certificate"
-    # For PEM format certificates, use 'openssl' format in security import
-    security import distribution.cert -k $KEYCHAIN_NAME -t cert -f openssl -A -T /usr/bin/codesign
-elif openssl pkcs12 -in distribution.cert -noout -passin pass: >/dev/null 2>&1; then
-    # It's a PKCS#12 file with no password
-    echo "Detected PKCS#12 certificate (no password)"
-    mv distribution.cert distribution.p12
-    security import distribution.p12 -k $KEYCHAIN_NAME -t cert -f pkcs12 -P "" -A -T /usr/bin/codesign
-    rm distribution.p12
-elif [ -n "${DISTRIBUTION_CERT_PASSWORD:-}" ] && openssl pkcs12 -in distribution.cert -noout -passin pass:"$DISTRIBUTION_CERT_PASSWORD" >/dev/null 2>&1; then
-    # It's a PKCS#12 file with password
-    echo "Detected PKCS#12 certificate (with password)"
-    mv distribution.cert distribution.p12
-    security import distribution.p12 -k $KEYCHAIN_NAME -t cert -f pkcs12 -P "$DISTRIBUTION_CERT_PASSWORD" -A -T /usr/bin/codesign
-    rm distribution.p12
+# Try to import certificate with minimal parameters first
+if security import distribution.cert -k $KEYCHAIN_NAME -A; then
+    echo "Successfully imported certificate with basic import"
+elif security import distribution.cert -k $KEYCHAIN_NAME -T /usr/bin/codesign; then
+    echo "Successfully imported certificate with codesign access"
+elif security import distribution.cert -k $KEYCHAIN_NAME; then
+    echo "Successfully imported certificate with keychain-only access"
 else
-    echo "Error: Cannot determine certificate format"
-    echo "File type detection:"
-    file distribution.cert || echo "file command not available"
-    echo "Certificate file size: $(wc -c < distribution.cert) bytes"
-    echo "Certificate file first 20 bytes (hex):"
-    hexdump -C distribution.cert | head -2
-    echo "Trying to import as raw format (fallback)..."
-    security import distribution.cert -k $KEYCHAIN_NAME -t cert -f raw -A -T /usr/bin/codesign || {
-        echo "Failed to import as raw format"
+    echo "All import attempts failed. Trying with format specification..."
+    
+    # Check certificate format and try format-specific import
+    if openssl x509 -in distribution.cert -text -noout -inform DER >/dev/null 2>&1; then
+        echo "Detected DER format certificate - trying with explicit format"
+        if security import distribution.cert -k $KEYCHAIN_NAME -t cert -f raw -A; then
+            echo "Successfully imported DER certificate with raw format"
+        else
+            echo "Failed to import DER certificate"
+            exit 1
+        fi
+    elif openssl x509 -in distribution.cert -text -noout -inform PEM >/dev/null 2>&1; then
+        echo "Detected PEM format certificate - trying with explicit format"
+        if security import distribution.cert -k $KEYCHAIN_NAME -t cert -f openssl -A; then
+            echo "Successfully imported PEM certificate with openssl format"
+        else
+            echo "Failed to import PEM certificate"
+            exit 1
+        fi
+    else
+        echo "Error: Cannot determine certificate format or import failed"
+        echo "Certificate file info:"
+        file distribution.cert 2>/dev/null || echo "file command not available"
+        echo "Certificate file size: $(wc -c < distribution.cert) bytes"
         exit 1
-    }
+    fi
 fi
 
 rm -f distribution.cert
