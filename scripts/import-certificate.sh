@@ -97,30 +97,83 @@ if [ "$IS_PKCS12" = true ]; then
     echo "=== Importing PKCS#12 certificate ==="
     CERT_PASSWORD="${DISTRIBUTION_CERT_PASSWORD:-}"
     
-    if [ -z "$CERT_PASSWORD" ]; then
-        echo "Attempting PKCS#12 import without password..."
-        set +e
-        IMPORT_OUTPUT=$(security import distribution.cert -k $KEYCHAIN_NAME -A -T /usr/bin/codesign -T /usr/bin/security 2>&1)
-        IMPORT_CODE=$?
-        set -e
-        echo "Import output: $IMPORT_OUTPUT"
-        echo "Import exit code: $IMPORT_CODE"
-    else
-        echo "Attempting PKCS#12 import with password..."
+    # Try multiple import methods for PKCS#12
+    IMPORT_ATTEMPTS=0
+    
+    # Method 1: Basic PKCS#12 import with password
+    if [ -n "$CERT_PASSWORD" ]; then
+        echo "Method 1: PKCS#12 import with password..."
         set +e
         IMPORT_OUTPUT=$(security import distribution.cert -k $KEYCHAIN_NAME -P "$CERT_PASSWORD" -A -T /usr/bin/codesign -T /usr/bin/security 2>&1)
         IMPORT_CODE=$?
         set -e
         echo "Import output: $IMPORT_OUTPUT"
         echo "Import exit code: $IMPORT_CODE"
+        IMPORT_ATTEMPTS=$((IMPORT_ATTEMPTS + 1))
+        
+        if [ $IMPORT_CODE -eq 0 ]; then
+            echo "✅ PKCS#12 import successful with password"
+            IMPORT_SUCCESS=true
+        else
+            echo "❌ Method 1 failed, trying without password..."
+        fi
     fi
     
-    if [ $IMPORT_CODE -eq 0 ]; then
-        echo "✅ PKCS#12 certificate imported successfully"
-        IMPORT_SUCCESS=true
-    else
-        echo "❌ PKCS#12 import failed, trying as regular certificate..."
-        IMPORT_SUCCESS=false
+    # Method 2: Try without password (some .p12 files don't have passwords)
+    if [ "$IMPORT_SUCCESS" != true ]; then
+        echo "Method 2: PKCS#12 import without password..."
+        set +e
+        IMPORT_OUTPUT=$(security import distribution.cert -k $KEYCHAIN_NAME -A -T /usr/bin/codesign -T /usr/bin/security 2>&1)
+        IMPORT_CODE=$?
+        set -e
+        echo "Import output: $IMPORT_OUTPUT"
+        echo "Import exit code: $IMPORT_CODE"
+        IMPORT_ATTEMPTS=$((IMPORT_ATTEMPTS + 1))
+        
+        if [ $IMPORT_CODE -eq 0 ]; then
+            echo "✅ PKCS#12 import successful without password"
+            IMPORT_SUCCESS=true
+        else
+            echo "❌ Method 2 failed, trying with explicit format..."
+        fi
+    fi
+    
+    # Method 3: Try with explicit PKCS#12 format specification
+    if [ "$IMPORT_SUCCESS" != true ] && [ -n "$CERT_PASSWORD" ]; then
+        echo "Method 3: PKCS#12 import with explicit format..."
+        set +e
+        IMPORT_OUTPUT=$(security import distribution.cert -k $KEYCHAIN_NAME -t cert -f pkcs12 -P "$CERT_PASSWORD" -A -T /usr/bin/codesign -T /usr/bin/security 2>&1)
+        IMPORT_CODE=$?
+        set -e
+        echo "Import output: $IMPORT_OUTPUT"
+        echo "Import exit code: $IMPORT_CODE"
+        IMPORT_ATTEMPTS=$((IMPORT_ATTEMPTS + 1))
+        
+        if [ $IMPORT_CODE -eq 0 ]; then
+            echo "✅ PKCS#12 import successful with explicit format"
+            IMPORT_SUCCESS=true
+        else
+            echo "❌ Method 3 failed, trying simplified approach..."
+        fi
+    fi
+    
+    # Method 4: Simplified import (just keychain and password)
+    if [ "$IMPORT_SUCCESS" != true ] && [ -n "$CERT_PASSWORD" ]; then
+        echo "Method 4: Simplified PKCS#12 import..."
+        set +e
+        IMPORT_OUTPUT=$(security import distribution.cert -k $KEYCHAIN_NAME -P "$CERT_PASSWORD" 2>&1)
+        IMPORT_CODE=$?
+        set -e
+        echo "Import output: $IMPORT_OUTPUT"
+        echo "Import exit code: $IMPORT_CODE"
+        IMPORT_ATTEMPTS=$((IMPORT_ATTEMPTS + 1))
+        
+        if [ $IMPORT_CODE -eq 0 ]; then
+            echo "✅ PKCS#12 import successful with simplified approach"
+            IMPORT_SUCCESS=true
+        else
+            echo "❌ All PKCS#12 import methods failed"
+        fi
     fi
 else
     echo "=== Detected regular certificate file ==="
