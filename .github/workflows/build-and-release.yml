@@ -245,9 +245,8 @@ jobs:
             # Also ensure CODE_SIGN_STYLE is Automatic for all Pods targets
             sed -i '' 's/CODE_SIGN_STYLE = Manual;/CODE_SIGN_STYLE = Automatic;/g' "$PODS_PROJECT"
             
-            # Add explicit PROVISIONING_PROFILE_SPECIFIER = ""; for safety
-            sed -i '' '/CODE_SIGN_STYLE = Automatic;/a\
-				PROVISIONING_PROFILE_SPECIFIER = "";' "$PODS_PROJECT"
+            # Add explicit empty PROVISIONING_PROFILE_SPECIFIER for safety
+            echo 'Adding empty PROVISIONING_PROFILE_SPECIFIER settings...'
             
             echo "After modification:"
             grep -c "PROVISIONING_PROFILE_SPECIFIER" "$PODS_PROJECT" || echo "No PROVISIONING_PROFILE_SPECIFIER found"
