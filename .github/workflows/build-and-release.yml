@@ -357,22 +357,23 @@ jobs:
         CERT_IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "Apple Distribution" | head -1 | awk '{print $2}')
         echo "Using certificate identity: $CERT_IDENTITY"
         
-        # Create temporary xcconfig for target-specific signing
-        cat > temp_signing.xcconfig << EOF
-        CODE_SIGN_IDENTITY[target=Runner] = $CERT_IDENTITY
-        CODE_SIGN_STYLE[target=Runner] = Manual  
-        PROVISIONING_PROFILE_SPECIFIER[target=Runner] = $PROVISIONING_PROFILE_UUID
-        EOF
+        # Archive the app with direct build settings
+        echo "Building with the following settings:"
+        echo "  CODE_SIGN_IDENTITY = $CERT_IDENTITY"
+        echo "  PROVISIONING_PROFILE_SPECIFIER = $PROVISIONING_PROFILE_UUID"
+        echo "  DEVELOPMENT_TEAM = $APPLE_TEAM_ID"
         
-        # Archive the app with target-specific code signing
         xcodebuild -workspace Runner.xcworkspace \
           -scheme Runner \
           -configuration Release \
           -derivedDataPath ../build/ios/derived \
           -archivePath ../build/ios/Runner.xcarchive \
           archive \
-          DEVELOPMENT_TEAM=$APPLE_TEAM_ID \
-          -xcconfig temp_signing.xcconfig
+          CODE_SIGN_IDENTITY="$CERT_IDENTITY" \
+          CODE_SIGN_STYLE=Manual \
+          PROVISIONING_PROFILE_SPECIFIER="$PROVISIONING_PROFILE_UUID" \
+          DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+          -destination "generic/platform=iOS"
         
         # Export IPA from archive
         xcodebuild -exportArchive \
