@@ -413,34 +413,12 @@ jobs:
             sed -i '' "s/PROVISIONING_PROFILE_SPECIFIER = .*/PROVISIONING_PROFILE_SPECIFIER = \"$PROVISIONING_PROFILE_UUID\";/" Runner.xcodeproj/project.pbxproj
         else
             echo "No PROVISIONING_PROFILE_SPECIFIER found, adding new entries..."
-            # Create a temporary Python script to modify the project file
-            cat > /tmp/add_provisioning_profile.py << 'PYTHONEOF'
-import re
-import sys
-import os
-
-# Get environment variables
-team_id = os.environ.get('APPLE_TEAM_ID')
-profile_uuid = os.environ.get('PROVISIONING_PROFILE_UUID')
-
-# Read the project file
-with open('Runner.xcodeproj/project.pbxproj', 'r') as f:
-    content = f.read()
-
-# Add PROVISIONING_PROFILE_SPECIFIER after DEVELOPMENT_TEAM lines
-pattern = f'(DEVELOPMENT_TEAM = {team_id};)'
-replacement = f'\\1\n\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "{profile_uuid}";'
-content = re.sub(pattern, replacement, content)
-
-# Write back to file
-with open('Runner.xcodeproj/project.pbxproj', 'w') as f:
-    f.write(content)
-
-print("Added PROVISIONING_PROFILE_SPECIFIER entries")
-PYTHONEOF
-
-            # Run the Python script
-            PROVISIONING_PROFILE_UUID="$PROVISIONING_PROFILE_UUID" python3 /tmp/add_provisioning_profile.py
+            # Use simple sed command instead of complex scripting
+            # Find lines with DEVELOPMENT_TEAM and add PROVISIONING_PROFILE_SPECIFIER on next line
+            cp Runner.xcodeproj/project.pbxproj Runner.xcodeproj/project.pbxproj.backup
+            
+            # Use perl for more reliable multiline editing
+            perl -i -pe "s/(DEVELOPMENT_TEAM = $APPLE_TEAM_ID;)/\$1\n\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = \"$PROVISIONING_PROFILE_UUID\";/g" Runner.xcodeproj/project.pbxproj
         fi
         
         echo "After configuration:"
