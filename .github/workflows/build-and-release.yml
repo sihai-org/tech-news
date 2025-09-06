@@ -384,11 +384,34 @@ jobs:
         CERT_IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "Apple Distribution" | head -1 | awk '{print $2}')
         echo "Using certificate identity: $CERT_IDENTITY"
         
-        # Archive the app with direct build settings
+        # Configure only the Runner target with provisioning profile
+        echo "Setting provisioning profile for Runner target only..."
+        
+        # Update the Runner project file to set provisioning profile only for Runner target
+        # First, ensure Pods targets have no provisioning profile
+        if [ -f "Pods/Pods.xcodeproj/project.pbxproj" ]; then
+            echo "Final cleanup of Pods provisioning profiles..."
+            # Remove all PROVISIONING_PROFILE_SPECIFIER lines from Pods project
+            sed -i '' '/PROVISIONING_PROFILE_SPECIFIER/d' Pods/Pods.xcodeproj/project.pbxproj
+            # Set CODE_SIGN_STYLE to Automatic for all Pods
+            sed -i '' 's/CODE_SIGN_STYLE = Manual;/CODE_SIGN_STYLE = Automatic;/g' Pods/Pods.xcodeproj/project.pbxproj
+            # Remove CODE_SIGN_IDENTITY from Pods
+            sed -i '' '/CODE_SIGN_IDENTITY/d' Pods/Pods.xcodeproj/project.pbxproj
+            echo "✓ Cleaned Pods project configuration"
+        fi
+        
+        # Set provisioning profile only in Runner project for Release configuration
+        echo "Configuring Runner target with provisioning profile: $PROVISIONING_PROFILE_UUID"
+        sed -i '' "s/PROVISIONING_PROFILE_SPECIFIER = .*/PROVISIONING_PROFILE_SPECIFIER = \"$PROVISIONING_PROFILE_UUID\";/" Runner.xcodeproj/project.pbxproj
+        
+        # Archive the app with minimal build settings
         echo "Building with the following settings:"
         echo "  CODE_SIGN_IDENTITY = $CERT_IDENTITY"
-        echo "  PROVISIONING_PROFILE_SPECIFIER = $PROVISIONING_PROFILE_UUID"
         echo "  DEVELOPMENT_TEAM = $APPLE_TEAM_ID"
+        echo "  Runner target provisioning profile = $PROVISIONING_PROFILE_UUID"
+        
+        echo "Command line invocation:"
+        echo "    /Applications/Xcode_16.4.app/Contents/Developer/usr/bin/xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release -derivedDataPath ../build/ios/derived -archivePath ../build/ios/Runner.xcarchive archive CODE_SIGN_IDENTITY=$CERT_IDENTITY CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=$APPLE_TEAM_ID -destination generic/platform=iOS"
         
         xcodebuild -workspace Runner.xcworkspace \
           -scheme Runner \
@@ -398,7 +421,6 @@ jobs:
           archive \
           CODE_SIGN_IDENTITY="$CERT_IDENTITY" \
           CODE_SIGN_STYLE=Manual \
-          PROVISIONING_PROFILE_SPECIFIER="$PROVISIONING_PROFILE_UUID" \
           DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
           -destination "generic/platform=iOS"
         
