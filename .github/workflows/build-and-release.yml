@@ -228,6 +228,22 @@ jobs:
         rm -rf Pods
         rm Podfile.lock
         pod install
+        
+        # Directly modify Pods project to prevent provisioning profile inheritance
+        echo "Clearing provisioning profile settings from Pods project..."
+        
+        # Find and modify the Pods project file to clear provisioning profile settings
+        PODS_PROJECT="Pods/Pods.xcodeproj/project.pbxproj"
+        if [ -f "$PODS_PROJECT" ]; then
+            # Clear PROVISIONING_PROFILE_SPECIFIER for all configurations
+            sed -i '' '/PROVISIONING_PROFILE_SPECIFIER/d' "$PODS_PROJECT"
+            # Ensure CODE_SIGN_STYLE is Automatic for Pods
+            sed -i '' 's/CODE_SIGN_STYLE = Manual;/CODE_SIGN_STYLE = Automatic;/g' "$PODS_PROJECT"
+            echo "✓ Cleared provisioning profile settings from Pods project"
+        else
+            echo "❌ Pods project file not found"
+        fi
+        
         cd ..
         
         # Debug: Check what happened in the certificate import step
