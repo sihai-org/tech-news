@@ -414,9 +414,8 @@ jobs:
         else
             echo "No PROVISIONING_PROFILE_SPECIFIER found, adding new entries..."
             # Add PROVISIONING_PROFILE_SPECIFIER after DEVELOPMENT_TEAM lines
-            sed -i '' "/DEVELOPMENT_TEAM = $APPLE_TEAM_ID;/a\\
-				PROVISIONING_PROFILE_SPECIFIER = \"$PROVISIONING_PROFILE_UUID\";
-" Runner.xcodeproj/project.pbxproj
+            sed -i '' "/DEVELOPMENT_TEAM = $APPLE_TEAM_ID;/a\\ 
+				PROVISIONING_PROFILE_SPECIFIER = \"$PROVISIONING_PROFILE_UUID\";" Runner.xcodeproj/project.pbxproj
         fi
         
         echo "After configuration:"
