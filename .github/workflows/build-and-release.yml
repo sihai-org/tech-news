@@ -424,22 +424,26 @@ jobs:
             # Use a safer approach: find and replace within build configurations
             echo "Adding PROVISIONING_PROFILE_SPECIFIER within build configurations..."
             
-            # Look for existing PROVISIONING_PROFILE_SPECIFIER entries and update them
-            if grep -q 'PROVISIONING_PROFILE_SPECIFIER = ""' Runner.xcodeproj/project.pbxproj; then
-                echo "Found empty PROVISIONING_PROFILE_SPECIFIER entries, updating them..."
-                sed -i '' 's/PROVISIONING_PROFILE_SPECIFIER = "";/PROVISIONING_PROFILE_SPECIFIER = "'$PROVISIONING_PROFILE_UUID'";/g' Runner.xcodeproj/project.pbxproj
-            elif grep -q 'PROVISIONING_PROFILE_SPECIFIER = ' Runner.xcodeproj/project.pbxproj; then
-                echo "Found existing PROVISIONING_PROFILE_SPECIFIER entries, updating them..."
-                sed -i '' 's/PROVISIONING_PROFILE_SPECIFIER = "[^"]*";/PROVISIONING_PROFILE_SPECIFIER = "'$PROVISIONING_PROFILE_UUID'";/g' Runner.xcodeproj/project.pbxproj
-            else
-                echo "No PROVISIONING_PROFILE_SPECIFIER entries found."
-                echo "This project may use automatic provisioning or will be handled by ExportOptions.plist"
-                # We'll rely on ExportOptions.plist for provisioning profile configuration
+            # Flutter uses xcconfig files for build settings, add provisioning profile there
+            echo "Adding provisioning profile settings to Flutter Release.xcconfig..."
+            if [ ! -f "Flutter/Release.xcconfig" ]; then
+                echo "❌ Flutter/Release.xcconfig not found!"
+                exit 1
             fi
+            
+            # Add provisioning profile settings to Release.xcconfig
+            echo "" >> Flutter/Release.xcconfig
+            echo "// Code signing settings for distribution" >> Flutter/Release.xcconfig
+            echo "CODE_SIGN_STYLE = Manual" >> Flutter/Release.xcconfig
+            echo "DEVELOPMENT_TEAM = $APPLE_TEAM_ID" >> Flutter/Release.xcconfig
+            echo "PROVISIONING_PROFILE_SPECIFIER = $PROVISIONING_PROFILE_UUID" >> Flutter/Release.xcconfig
+            
+            echo "✓ Added provisioning profile settings to Release.xcconfig"
         fi
         
         echo "After configuration:"
-        grep -n "PROVISIONING_PROFILE_SPECIFIER" Runner.xcodeproj/project.pbxproj || echo "Still no PROVISIONING_PROFILE_SPECIFIER found"
+        echo "Contents of Flutter/Release.xcconfig:"
+        cat Flutter/Release.xcconfig
         
         # Archive the app with minimal build settings
         echo "Building with the following settings:"
