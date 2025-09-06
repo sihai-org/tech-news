@@ -402,7 +402,25 @@ jobs:
         
         # Set provisioning profile only in Runner project for Release configuration
         echo "Configuring Runner target with provisioning profile: $PROVISIONING_PROFILE_UUID"
-        sed -i '' "s/PROVISIONING_PROFILE_SPECIFIER = .*/PROVISIONING_PROFILE_SPECIFIER = \"$PROVISIONING_PROFILE_UUID\";/" Runner.xcodeproj/project.pbxproj
+        
+        # Check current PROVISIONING_PROFILE_SPECIFIER settings
+        echo "Current PROVISIONING_PROFILE_SPECIFIER in Runner project:"
+        grep -n "PROVISIONING_PROFILE_SPECIFIER" Runner.xcodeproj/project.pbxproj || echo "No PROVISIONING_PROFILE_SPECIFIER found"
+        
+        # More robust approach: update existing entries and add if missing
+        if grep -q "PROVISIONING_PROFILE_SPECIFIER" Runner.xcodeproj/project.pbxproj; then
+            echo "Updating existing PROVISIONING_PROFILE_SPECIFIER entries..."
+            sed -i '' "s/PROVISIONING_PROFILE_SPECIFIER = .*/PROVISIONING_PROFILE_SPECIFIER = \"$PROVISIONING_PROFILE_UUID\";/" Runner.xcodeproj/project.pbxproj
+        else
+            echo "No PROVISIONING_PROFILE_SPECIFIER found, adding new entries..."
+            # Add PROVISIONING_PROFILE_SPECIFIER after DEVELOPMENT_TEAM lines
+            sed -i '' "/DEVELOPMENT_TEAM = $APPLE_TEAM_ID;/a\\
+				PROVISIONING_PROFILE_SPECIFIER = \"$PROVISIONING_PROFILE_UUID\";
+" Runner.xcodeproj/project.pbxproj
+        fi
+        
+        echo "After configuration:"
+        grep -n "PROVISIONING_PROFILE_SPECIFIER" Runner.xcodeproj/project.pbxproj || echo "Still no PROVISIONING_PROFILE_SPECIFIER found"
         
         # Archive the app with minimal build settings
         echo "Building with the following settings:"
