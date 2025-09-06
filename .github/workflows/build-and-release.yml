@@ -207,6 +207,11 @@ jobs:
         # Generate ExportOptions.plist with actual values
         bash scripts/generate-export-options.sh
         
+        # Debug: Show generated ExportOptions.plist
+        echo "=== Generated ExportOptions.plist ==="
+        cat mobile/ios/ExportOptions.plist
+        echo "=== End ExportOptions.plist ==="
+        
         # Set up Xcode signing
         echo "=== Setting up code signing ==="
         echo "Team ID: $APPLE_TEAM_ID"

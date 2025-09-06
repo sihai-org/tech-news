@@ -9,7 +9,7 @@ cat > mobile/ios/ExportOptions.plist << EOF
 <plist version="1.0">
 <dict>
     <key>method</key>
-    <string>release-testing</string>
+    <string>app-store</string>
     <key>teamID</key>
     <string>$APPLE_TEAM_ID</string>
     <key>uploadBitcode</key>
@@ -17,7 +17,7 @@ cat > mobile/ios/ExportOptions.plist << EOF
     <key>compileBitcode</key>
     <false/>
     <key>uploadSymbols</key>
-    <false/>
+    <true/>
     <key>signingStyle</key>
     <string>manual</string>
     <key>signingCertificate</key>
@@ -29,6 +29,8 @@ cat > mobile/ios/ExportOptions.plist << EOF
     </dict>
     <key>thinning</key>
     <string>&lt;none&gt;</string>
+    <key>destination</key>
+    <string>export</string>
 </dict>
 </plist>
 EOF
