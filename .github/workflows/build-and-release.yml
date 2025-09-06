@@ -407,17 +407,32 @@ jobs:
         echo "Current PROVISIONING_PROFILE_SPECIFIER in Runner project:"
         grep -n "PROVISIONING_PROFILE_SPECIFIER" Runner.xcodeproj/project.pbxproj || echo "No PROVISIONING_PROFILE_SPECIFIER found"
         
-        # More robust approach: update existing entries and add if missing
+        # Simplified approach: use Python to reliably modify the project file
         if grep -q "PROVISIONING_PROFILE_SPECIFIER" Runner.xcodeproj/project.pbxproj; then
             echo "Updating existing PROVISIONING_PROFILE_SPECIFIER entries..."
             sed -i '' "s/PROVISIONING_PROFILE_SPECIFIER = .*/PROVISIONING_PROFILE_SPECIFIER = \"$PROVISIONING_PROFILE_UUID\";/" Runner.xcodeproj/project.pbxproj
         else
             echo "No PROVISIONING_PROFILE_SPECIFIER found, adding new entries..."
-            # Add PROVISIONING_PROFILE_SPECIFIER after DEVELOPMENT_TEAM lines using a simpler approach
-            # First create a temporary file with the new line
-            echo "				PROVISIONING_PROFILE_SPECIFIER = \"$PROVISIONING_PROFILE_UUID\";" > /tmp/profile_line.txt
-            # Then insert it after DEVELOPMENT_TEAM lines
-            awk "/DEVELOPMENT_TEAM = $APPLE_TEAM_ID;/{print; getline < \"/tmp/profile_line.txt\"; print} !/DEVELOPMENT_TEAM = $APPLE_TEAM_ID;/{print}" Runner.xcodeproj/project.pbxproj > /tmp/project_updated.pbxproj && mv /tmp/project_updated.pbxproj Runner.xcodeproj/project.pbxproj
+            # Use Python to safely add provisioning profile lines
+            python3 << EOF
+import re
+import sys
+
+# Read the project file
+with open('Runner.xcodeproj/project.pbxproj', 'r') as f:
+    content = f.read()
+
+# Add PROVISIONING_PROFILE_SPECIFIER after DEVELOPMENT_TEAM lines
+pattern = r'(DEVELOPMENT_TEAM = $APPLE_TEAM_ID;)'
+replacement = r'\1\n\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "$PROVISIONING_PROFILE_UUID";'
+content = re.sub(pattern, replacement, content)
+
+# Write back to file
+with open('Runner.xcodeproj/project.pbxproj', 'w') as f:
+    f.write(content)
+
+print("Added PROVISIONING_PROFILE_SPECIFIER entries")
+EOF
         fi
         
         echo "After configuration:"
