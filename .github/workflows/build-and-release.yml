@@ -417,8 +417,13 @@ jobs:
             # Find lines with DEVELOPMENT_TEAM and add PROVISIONING_PROFILE_SPECIFIER on next line
             cp Runner.xcodeproj/project.pbxproj Runner.xcodeproj/project.pbxproj.backup
             
-            # Use perl for more reliable multiline editing
-            perl -i -pe "s/(DEVELOPMENT_TEAM = $APPLE_TEAM_ID;)/\$1\n\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = \"$PROVISIONING_PROFILE_UUID\";/g" Runner.xcodeproj/project.pbxproj
+            # Very simple approach: add manually with echo
+            echo "Manually adding PROVISIONING_PROFILE_SPECIFIER to project file..."
+            # Find a Release configuration section and add the line
+            echo "				PROVISIONING_PROFILE_SPECIFIER = \"$PROVISIONING_PROFILE_UUID\";" >> Runner.xcodeproj/project.pbxproj
+            
+            # Also replace any existing empty ones
+            sed -i '' 's/PROVISIONING_PROFILE_SPECIFIER = "";/PROVISIONING_PROFILE_SPECIFIER = "'$PROVISIONING_PROFILE_UUID'";/g' Runner.xcodeproj/project.pbxproj
         fi
         
         echo "After configuration:"
