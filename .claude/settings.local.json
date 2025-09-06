@@ -53,7 +53,12 @@
       "Bash(for lib in Core CoreAudio CoreFoundation CoreGraphics CoreImage CoreMedia Darwin Dispatch Metal ObjectiveC QuartzCore XPC os simd Foundation UIKit)",
       "Bash(if [ -f \"$source\" ])",
       "Bash(base64:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(bash:*)",
+      "Bash(grep:*)",
+      "Read(///**)",
+      "Read(///**)",
+      "Bash(gh run list:*)"
     ],
     "deny": [],
     "ask": []
