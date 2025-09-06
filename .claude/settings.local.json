@@ -58,7 +58,8 @@
       "Bash(grep:*)",
       "Read(///**)",
       "Read(///**)",
-      "Bash(gh run list:*)"
+      "Bash(gh run list:*)",
+      "Bash(python3:*)"
     ],
     "deny": [],
     "ask": []
