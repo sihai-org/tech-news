@@ -9,7 +9,7 @@ cat > mobile/ios/ExportOptions.plist << EOF
 <plist version="1.0">
 <dict>
     <key>method</key>
-    <string>ad-hoc</string>
+    <string>app-store</string>
     <key>teamID</key>
     <string>$APPLE_TEAM_ID</string>
     <key>uploadBitcode</key>
