@@ -247,8 +247,7 @@ jobs:
             
             # Add explicit PROVISIONING_PROFILE_SPECIFIER = ""; for safety
             sed -i '' '/CODE_SIGN_STYLE = Automatic;/a\
-				PROVISIONING_PROFILE_SPECIFIER = "";
-' "$PODS_PROJECT"
+				PROVISIONING_PROFILE_SPECIFIER = "";' "$PODS_PROJECT"
             
             echo "After modification:"
             grep -c "PROVISIONING_PROFILE_SPECIFIER" "$PODS_PROJECT" || echo "No PROVISIONING_PROFILE_SPECIFIER found"
