@@ -424,13 +424,17 @@ jobs:
             # Use a safer approach: find and replace within build configurations
             echo "Adding PROVISIONING_PROFILE_SPECIFIER within build configurations..."
             
-            # Look for existing empty PROVISIONING_PROFILE_SPECIFIER and replace
+            # Look for existing PROVISIONING_PROFILE_SPECIFIER entries and update them
             if grep -q 'PROVISIONING_PROFILE_SPECIFIER = ""' Runner.xcodeproj/project.pbxproj; then
-                echo "Found empty PROVISIONING_PROFILE_SPECIFIER, updating it..."
+                echo "Found empty PROVISIONING_PROFILE_SPECIFIER entries, updating them..."
                 sed -i '' 's/PROVISIONING_PROFILE_SPECIFIER = "";/PROVISIONING_PROFILE_SPECIFIER = "'$PROVISIONING_PROFILE_UUID'";/g' Runner.xcodeproj/project.pbxproj
+            elif grep -q 'PROVISIONING_PROFILE_SPECIFIER = ' Runner.xcodeproj/project.pbxproj; then
+                echo "Found existing PROVISIONING_PROFILE_SPECIFIER entries, updating them..."
+                sed -i '' 's/PROVISIONING_PROFILE_SPECIFIER = "[^"]*";/PROVISIONING_PROFILE_SPECIFIER = "'$PROVISIONING_PROFILE_UUID'";/g' Runner.xcodeproj/project.pbxproj
             else
-                echo "No empty PROVISIONING_PROFILE_SPECIFIER found, will rely on xcodebuild command line parameters"
-                # Don't modify the project file structure, let xcodebuild handle it
+                echo "No PROVISIONING_PROFILE_SPECIFIER entries found."
+                echo "This project may use automatic provisioning or will be handled by ExportOptions.plist"
+                # We'll rely on ExportOptions.plist for provisioning profile configuration
             fi
         fi
         
@@ -444,9 +448,9 @@ jobs:
         echo "  Runner target provisioning profile = $PROVISIONING_PROFILE_UUID"
         
         echo "Command line invocation:"
-        echo "    xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release -derivedDataPath ../build/ios/derived -archivePath ../build/ios/Runner.xcarchive archive CODE_SIGN_IDENTITY=$CERT_IDENTITY CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=$APPLE_TEAM_ID PROVISIONING_PROFILE_SPECIFIER=$PROVISIONING_PROFILE_UUID -destination generic/platform=iOS"
+        echo "    xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release -derivedDataPath ../build/ios/derived -archivePath ../build/ios/Runner.xcarchive archive CODE_SIGN_IDENTITY=$CERT_IDENTITY CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=$APPLE_TEAM_ID -destination generic/platform=iOS"
         
-        # Build with provisioning profile specified on command line for Runner target only
+        # Build WITHOUT global provisioning profile parameter to prevent Pods inheritance
         xcodebuild -workspace Runner.xcworkspace \
           -scheme Runner \
           -configuration Release \
@@ -456,7 +460,6 @@ jobs:
           CODE_SIGN_IDENTITY="$CERT_IDENTITY" \
           CODE_SIGN_STYLE=Manual \
           DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
-          PROVISIONING_PROFILE_SPECIFIER="$PROVISIONING_PROFILE_UUID" \
           -destination "generic/platform=iOS"
         
         # Export IPA from archive
