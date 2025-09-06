@@ -235,11 +235,24 @@ jobs:
         # Find and modify the Pods project file to clear provisioning profile settings
         PODS_PROJECT="Pods/Pods.xcodeproj/project.pbxproj"
         if [ -f "$PODS_PROJECT" ]; then
-            # Clear PROVISIONING_PROFILE_SPECIFIER for all configurations
-            sed -i '' '/PROVISIONING_PROFILE_SPECIFIER/d' "$PODS_PROJECT"
-            # Ensure CODE_SIGN_STYLE is Automatic for Pods
+            echo "Before modification:"
+            grep -c "PROVISIONING_PROFILE_SPECIFIER" "$PODS_PROJECT" || echo "No PROVISIONING_PROFILE_SPECIFIER found"
+            
+            # More aggressive cleanup - remove any line containing PROVISIONING_PROFILE_SPECIFIER
+            grep -v "PROVISIONING_PROFILE_SPECIFIER" "$PODS_PROJECT" > "$PODS_PROJECT.tmp"
+            mv "$PODS_PROJECT.tmp" "$PODS_PROJECT"
+            
+            # Also ensure CODE_SIGN_STYLE is Automatic for all Pods targets
             sed -i '' 's/CODE_SIGN_STYLE = Manual;/CODE_SIGN_STYLE = Automatic;/g' "$PODS_PROJECT"
-            echo "✓ Cleared provisioning profile settings from Pods project"
+            
+            # Add explicit PROVISIONING_PROFILE_SPECIFIER = ""; for safety
+            sed -i '' '/CODE_SIGN_STYLE = Automatic;/a\
+				PROVISIONING_PROFILE_SPECIFIER = "";
+' "$PODS_PROJECT"
+            
+            echo "After modification:"
+            grep -c "PROVISIONING_PROFILE_SPECIFIER" "$PODS_PROJECT" || echo "No PROVISIONING_PROFILE_SPECIFIER found"
+            echo "✓ Aggressively cleared provisioning profile settings from Pods project"
         else
             echo "❌ Pods project file not found"
         fi
