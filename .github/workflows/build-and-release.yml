@@ -478,12 +478,25 @@ jobs:
           -exportOptionsPlist ExportOptions.plist
         
         # Move and rename IPA
-        mv ../build/ios/ipa/*.ipa ../../github-radar-news-ios-signed.ipa
+        echo "Current directory: $(pwd)"
+        echo "Looking for IPA files in: ../build/ios/ipa/"
+        ls -la ../build/ios/ipa/
+        
+        # Find and move the IPA file
+        IPA_FILE=$(find ../build/ios/ipa -name "*.ipa" | head -1)
+        if [ -f "$IPA_FILE" ]; then
+            echo "Found IPA: $IPA_FILE"
+            cp "$IPA_FILE" ../github-radar-news-ios-signed.ipa
+            echo "✅ IPA copied to: ../github-radar-news-ios-signed.ipa"
+        else
+            echo "❌ No IPA file found!"
+            exit 1
+        fi
         
         # Verify IPA creation and signing
         echo "=== Signed IPA Package Info ==="
-        ls -lh ../../github-radar-news-ios-signed.ipa
-        unzip -l ../../github-radar-news-ios-signed.ipa | head -20
+        ls -lh ../github-radar-news-ios-signed.ipa
+        unzip -l ../github-radar-news-ios-signed.ipa | head -20
         echo "========================"
         
     - name: Upload IPA artifact
